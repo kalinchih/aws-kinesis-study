@@ -37,8 +37,8 @@
             <AppenderRef ref="Console"/>
         </Logger>
         <Root>
-            <AppenderRef ref="FileInfo"/>
             <AppenderRef ref="SystemInfo"/>
+            <AppenderRef ref="Console"/>
         </Root>
     </Loggers>
 </Configuration>
