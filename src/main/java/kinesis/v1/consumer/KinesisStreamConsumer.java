@@ -1,172 +1,80 @@
 package kinesis.v1.consumer;
 
-import com.amazonaws.services.kinesis.clientlibrary.exceptions.InvalidStateException;
-import com.amazonaws.services.kinesis.clientlibrary.exceptions.ShutdownException;
-import com.amazonaws.services.kinesis.clientlibrary.exceptions.ThrottlingException;
-import com.amazonaws.services.kinesis.clientlibrary.interfaces.IRecordProcessor;
-import com.amazonaws.services.kinesis.clientlibrary.interfaces.IRecordProcessorCheckpointer;
-import com.amazonaws.services.kinesis.clientlibrary.lib.worker.ShutdownReason;
-import com.amazonaws.services.kinesis.model.Record;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.kinesis.clientlibrary.interfaces.IRecordProcessorFactory;
+import com.amazonaws.services.kinesis.clientlibrary.lib.worker.InitialPositionInStream;
+import com.amazonaws.services.kinesis.clientlibrary.lib.worker.KinesisClientLibConfiguration;
+import com.amazonaws.services.kinesis.clientlibrary.lib.worker.Worker;
+import com.amazonaws.services.kinesis.metrics.impl.NullMetricsFactory;
+import com.amazonaws.services.kinesis.metrics.interfaces.IMetricsFactory;
+import utils.config.ConfigUtils;
 
-import java.io.IOException;
-import java.nio.charset.CharacterCodingException;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Properties;
+import java.util.UUID;
 
 /**
- * Display records and checkpoints progress.
+ * Sample consumer application for Amazon Kinesis Streams to display records.
  */
-public class KinesisStreamConsumer implements IRecordProcessor {
+public final class Consumer {
 
-    private static final boolean IF_TIME_FIELD_ENABLED = Boolean.parseBoolean(System.getProperty("if.time.field.enabled", "false"));
-    private static final String TIME_FIELD_NAME = System.getProperty("time.field.name", "time");
-    private static final String TIME_FIELD_FORMAT = System.getProperty("time.field.format", "yyyy-MM-dd'T'HH:mm:ss.SSSxxxxx");
-    private static final Log LOG = LogFactory.getLog(KinesisStreamConsumer.class);
-    // Backoff and retry settings
-    private static final long BACKOFF_TIME_IN_MILLIS = 3000L;
-    private static final int NUM_RETRIES = 10;
-    private final CharsetDecoder decoder = Charset.forName("UTF-8").newDecoder();
-    private final DateTimeFormatter dtf = DateTimeFormatter.ofPattern(TIME_FIELD_FORMAT);
-    private final ObjectMapper mapper = new ObjectMapper();
-    private String shardId;
-    private long nextCheckpointTimeInMillis;
+    // https://docs.aws.amazon.com/en_us/streams/latest/dev/kinesis-record-processor-additional-considerations.html
+    // https://docs.aws.amazon.com/en_us/kinesis/latest/APIReference/API_GetShardIterator.html#API_GetShardIterator_RequestSyntax
+    private String accessKeyId;
+    private String accessSecretKey;
+    private String region;
+    private String kinesisStreamName;
+    private String kinesisConsumerName;
+    private String kinesisConsumerInitialPositionInStream;
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void initialize(String shardId) {
-        LOG.info("Initializing record processor for shard: " + shardId);
-        this.shardId = shardId;
+    private Consumer() throws Exception {
+        ConfigUtils configUtils = ConfigUtils.build();
+        Properties config = configUtils.getProperties("config.properties");
+        accessKeyId = configUtils.getProperty(config, "aws.credential.access_key_id");
+        accessSecretKey = configUtils.getProperty(config, "aws.credential.access_secret_key");
+        region = configUtils.getProperty(config, "aws.credential.region");
+        kinesisStreamName = configUtils.getProperty(config, "aws.kinesis.stream_name");
+        kinesisConsumerName = configUtils.getProperty(config, "aws.kinesis.consumer_name");
+        kinesisConsumerInitialPositionInStream = configUtils.getProperty(config, "aws.kinesis.consumer_initial_position_in_stream");
     }
 
     /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void processRecords(List<Record> records, IRecordProcessorCheckpointer checkpointer) {
-        LOG.info("Processing " + records.size() + " records from " + shardId);
-        // Process records and perform all exception handling.
-        processRecordsWithRetries(records);
-        checkpoint(checkpointer);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void shutdown(IRecordProcessorCheckpointer checkpointer, ShutdownReason reason) {
-        LOG.info("Shutting down record processor for shard: " + shardId);
-        // Important to checkpoint after reaching end of shard, so we can start processing data from child shards.
-        if (reason == ShutdownReason.TERMINATE) {
-            checkpoint(checkpointer);
-        }
-    }
-
-    /**
-     * Checkpoint with retries.
+     * Consumer method to start workers
      *
-     * @param checkpointer
-     */
-    private void checkpoint(IRecordProcessorCheckpointer checkpointer) {
-        LOG.info("Checkpointing shard " + shardId);
-        for (int i = 0; i < NUM_RETRIES; i++) {
-            try {
-                LOG.info("Start to checkpoint(), sequenceNumber: " + checkpointer.prepareCheckpoint().getPendingCheckpoint().getSequenceNumber());
-                checkpointer.checkpoint();
-                break;
-            } catch (ShutdownException se) {
-                // Ignore checkpoint if the processor instance has been shutdown (fail over).
-                LOG.info("Caught shutdown exception, skipping checkpoint.", se);
-                break;
-            } catch (ThrottlingException e) {
-                // Backoff and re-attempt checkpoint upon transient failures
-                if (i >= (NUM_RETRIES - 1)) {
-                    LOG.error("Checkpoint failed after " + (i + 1) + "attempts.", e);
-                    break;
-                } else {
-                    LOG.info("Transient issue when checkpointing - attempt " + (i + 1) + " of " + NUM_RETRIES, e);
-                }
-            } catch (InvalidStateException e) {
-                // This indicates an issue with the DynamoDB table (check for table, provisioned IOPS).
-                LOG.error("Cannot save checkpoint to the DynamoDB table used by the Amazon Kinesis Client Library.", e);
-                break;
-            }
-            try {
-                Thread.sleep(BACKOFF_TIME_IN_MILLIS);
-            } catch (InterruptedException e) {
-                LOG.debug("Interrupted sleep", e);
-            }
-        }
-    }
-
-    /**
-     * Process records performing retries as needed. Skip "poison pill" records.
+     * @param args
      *
-     * @param records Data records to be processed.
+     * @throws UnknownHostException
      */
-    private void processRecordsWithRetries(List<Record> records) {
-        for (Record record : records) {
-            boolean processedSuccessfully = false;
-            for (int i = 0; i < NUM_RETRIES; i++) {
-                try {
-                    processSingleRecord(record);
-                    processedSuccessfully = true;
-                    break;
-                } catch (Throwable t) {
-                    LOG.warn("Caught throwable while processing record " + record, t);
-                }
-                // backoff if we encounter an exception.
-                try {
-                    Thread.sleep(BACKOFF_TIME_IN_MILLIS);
-                } catch (InterruptedException e) {
-                    LOG.debug("Interrupted sleep", e);
-                }
-            }
-            if (!processedSuccessfully) {
-                LOG.error("Couldn't process record " + record + ". Skipping the record.");
-            }
-        }
-    }
-
-    /**
-     * Process a single record.
-     *
-     * @param record The record to be processed.
-     */
-    private void processSingleRecord(Record record) {
-        String data = null;
+    public static void main(String[] args) {
         try {
-            // For this app, we interpret the payload as UTF-8 chars.
-            data = decoder.decode(record.getData()).toString();
-            // Assume this record including time field and log its age.
-            JsonNode jsonData = mapper.readTree(data);
-            long approximateArrivalTimestamp = record.getApproximateArrivalTimestamp().getTime();
-            long currentTime = System.currentTimeMillis();
-            long ageOfRecordInMillisFromArrival = currentTime - approximateArrivalTimestamp;
-            if (IF_TIME_FIELD_ENABLED) {
-                long recordCreateTime = ZonedDateTime.parse(jsonData.get(TIME_FIELD_NAME).asText(), dtf).toInstant().toEpochMilli();
-                long ageOfRecordInMillis = currentTime - recordCreateTime;
-                System.out.println(
-                        "---\nShard: " + shardId + ", PartitionKey: " + record.getPartitionKey() + ", SequenceNumber: " + record.getSequenceNumber() +
-                                "\nCreated " + ageOfRecordInMillis + " milliseconds ago. Arrived " + ageOfRecordInMillisFromArrival +
-                                " milliseconds ago.\n" + data);
-            } else {
-                System.out.println(
-                        "---\nShard: " + shardId + ", PartitionKey: " + record.getPartitionKey() + ", SequenceNumber: " + record.getSequenceNumber() +
-                                "\nArrived " + ageOfRecordInMillisFromArrival + " milliseconds ago.\n" + data);
-            }
-        } catch (CharacterCodingException e) {
-            LOG.error("Malformed data: " + data, e);
-        } catch (IOException e) {
-            LOG.info("Record does not match sample record format. Ignoring record with data; " + data);
+            Consumer consumer = new Consumer();
+            consumer.run();
+        } catch (Exception e) {
+            System.err.println("Caught throwable while processing data.");
+            e.printStackTrace();
+            System.exit(1);
         }
+    }
+
+    private void run() throws Exception {
+        // Set AWS credentials
+        AWSCredentials creds = new BasicAWSCredentials(accessKeyId, accessSecretKey);
+        // Set KCL configuration
+        String workerId = InetAddress.getLocalHost().getCanonicalHostName() + ":" + UUID.randomUUID();
+        KinesisClientLibConfiguration kclConfiguration =
+                new KinesisClientLibConfiguration(kinesisConsumerName, kinesisStreamName, new AWSStaticCredentialsProvider(creds), workerId);
+        kclConfiguration.withRegionName(region);
+        kclConfiguration.withInitialPositionInStream(InitialPositionInStream.valueOf(kinesisConsumerInitialPositionInStream));
+        kclConfiguration.withMaxRecords(10);
+        // Start workers
+        IRecordProcessorFactory recordProcessorFactory = new KinesisConsumerFactory();
+        IMetricsFactory metricsFactory = new NullMetricsFactory();
+        Worker worker =
+                new Worker.Builder().recordProcessorFactory(recordProcessorFactory).config(kclConfiguration).metricsFactory(metricsFactory).build();
+        System.out.printf("Running %s to process stream %s as worker %s...\n", kinesisConsumerName, kinesisStreamName, workerId);
+        worker.run();
     }
 }

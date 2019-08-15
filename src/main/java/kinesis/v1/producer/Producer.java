@@ -9,6 +9,7 @@ import com.amazonaws.services.kinesis.model.PutRecordsRequest;
 import com.amazonaws.services.kinesis.model.PutRecordsRequestEntry;
 import com.amazonaws.services.kinesis.model.PutRecordsResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import kinesis.v1.RecordObject;
 import utils.config.ConfigUtils;
 
 import java.nio.ByteBuffer;

@@ -1,4 +1,4 @@
-package kinesis.v1.producer;
+package kinesis.v1;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -6,7 +6,8 @@ import java.time.format.DateTimeFormatter;
 
 public class RecordObject {
 
-    private static final String TIME_FIELD_FORMAT = System.getProperty("time.field.format", "yyyy-MM-dd'T'HH:mm:ss.SSSxxxxx");
+    private static final String TIME_FIELD_FORMAT = System.getProperty("time.field.format", "yyyy-MM-dd'T'HH:mm:ss" +
+            ".SSSxxxxx");
     //    final DateTimeFormatter dtf = DateTimeFormatter.ofPattern(TIME_FIELD_FORMAT).withZone(ZoneId.of("UTC"));
     final DateTimeFormatter dtf = DateTimeFormatter.ofPattern(TIME_FIELD_FORMAT).withZone(ZoneId.of("Asia/Taipei"));
     public String partitionKey = "";
