@@ -27,10 +27,10 @@ public class Producer {
     private Producer() throws Exception {
         ConfigUtils configUtils = ConfigUtils.build();
         Properties config = configUtils.getProperties("config.properties");
-        accessKeyId = configUtils.getProperty(config, "aws.credential.access_key_id");
-        accessSecretKey = configUtils.getProperty(config, "aws.credential.access_secret_key");
-        region = configUtils.getProperty(config, "aws.credential.region");
-        kinesisStreamName = configUtils.getProperty(config, "aws.kinesis.stream_name");
+        accessKeyId = configUtils.getProperty(config, "accessKeyId");
+        accessSecretKey = configUtils.getProperty(config, "accessSecretKey");
+        region = configUtils.getProperty(config, "streamRegion");
+        kinesisStreamName = configUtils.getProperty(config, "streamName");
     }
 
     public static void main(String[] args) {

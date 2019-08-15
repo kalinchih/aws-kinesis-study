@@ -32,10 +32,10 @@ public class Main {
             AWSCredentials awsCredentials = new BasicAWSCredentials(accessKeyId, accessSecretKey);
             AWSStaticCredentialsProvider awsStaticCredentialsProvider =
                     new AWSStaticCredentialsProvider(awsCredentials);
-            String awsRegion = configUtils.getProperty(config, "awsRegion");
+            String streamRegion = configUtils.getProperty(config, "streamRegion");
             String streamName = configUtils.getProperty(config, "streamName");
             String consumerName = configUtils.getProperty(config, "consumerName");
-            KinesisStreamConsumerBag bag = new KinesisStreamConsumerBag(awsStaticCredentialsProvider, awsRegion,
+            KinesisStreamConsumerBag bag = new KinesisStreamConsumerBag(awsStaticCredentialsProvider, streamRegion,
                     streamName, consumerName);
             // Set bag optional settings
             String initialPositionInStream = configUtils.getProperty(config, "initialPositionInStream");
