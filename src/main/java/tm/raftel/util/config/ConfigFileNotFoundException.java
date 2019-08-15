@@ -1,4 +1,4 @@
-package utils.config;
+package tm.raftel.util.config;
 
 public class ConfigFileNotFoundException extends Exception {
 

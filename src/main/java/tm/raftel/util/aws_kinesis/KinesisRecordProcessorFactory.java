@@ -1,13 +1,13 @@
-package kinesis.v1.consumer;
+package tm.raftel.util.aws_kinesis;
 
 import com.amazonaws.services.kinesis.clientlibrary.interfaces.IRecordProcessor;
 import com.amazonaws.services.kinesis.clientlibrary.interfaces.IRecordProcessorFactory;
 
-public class KinesisStreamRecordProcessorFactory implements IRecordProcessorFactory {
+public class KinesisRecordProcessorFactory implements IRecordProcessorFactory {
 
-    private KinesisStreamConsumerBag bag;
+    private KinesisConsumerBag bag;
 
-    KinesisStreamRecordProcessorFactory(KinesisStreamConsumerBag bag) {
+    KinesisRecordProcessorFactory(KinesisConsumerBag bag) {
         this.bag = bag;
     }
 
@@ -16,6 +16,6 @@ public class KinesisStreamRecordProcessorFactory implements IRecordProcessorFact
      */
     @Override
     public IRecordProcessor createProcessor() {
-        return new KinesisStreamRecordProcessor(bag);
+        return new KinesisRecordProcessor(bag);
     }
 }

@@ -1,13 +1,13 @@
-package kinesis.v1.consumer;
+package tm.raftel.util.aws_kinesis;
 
 import com.amazonaws.services.kinesis.clientlibrary.lib.worker.Worker;
 
-class KinesisStreamConsumerWorkerWithId {
+class KinesisConsumerWorkerWithId {
 
     private Worker worker;
     private String workerId;
 
-    KinesisStreamConsumerWorkerWithId(Worker worker, String workerId) {
+    KinesisConsumerWorkerWithId(Worker worker, String workerId) {
         this.worker = worker;
         this.workerId = workerId;
     }

@@ -1,5 +1,3 @@
-package kinesis.v1.producer;
-
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
@@ -9,41 +7,54 @@ import com.amazonaws.services.kinesis.model.PutRecordsRequest;
 import com.amazonaws.services.kinesis.model.PutRecordsRequestEntry;
 import com.amazonaws.services.kinesis.model.PutRecordsResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import kinesis.v1.RecordObject;
-import utils.config.ConfigUtils;
+import org.apache.commons.lang3.StringUtils;
+import tm.raftel.util.config.ConfigUtils;
+import tm.raftel.util.phase.PhaseUtils;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-public class Producer {
+public class ProducerApp {
 
+    private String phase;
     private String accessKeyId;
     private String accessSecretKey;
     private String region;
     private String kinesisStreamName;
 
-    private Producer() throws Exception {
+    public static void main(String[] args) {
+        try {
+            ProducerApp producerApp = new ProducerApp();
+            producerApp.setupPhase(args);
+            producerApp.loadConfig();
+            int putRequestCount = 10;
+            int recordsInOnePutRequest = 1;
+            producerApp.produce(putRequestCount, recordsInOnePutRequest, 1000);
+        } catch (Exception e) {
+            System.err.println("Caught throwable while processing data.");
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
+
+    private void setupPhase(String[] args) throws AppFatalException {
+        if (args.length > 0) {
+            phase = StringUtils.trim(args[0]);
+            PhaseUtils.build().setPhase(phase);
+        } else {
+            throw new AppFatalException("Cannot determine phase");
+        }
+    }
+
+    private void loadConfig() throws Exception {
         ConfigUtils configUtils = ConfigUtils.build();
         Properties config = configUtils.getProperties("config.properties");
         accessKeyId = configUtils.getProperty(config, "accessKeyId");
         accessSecretKey = configUtils.getProperty(config, "accessSecretKey");
         region = configUtils.getProperty(config, "streamRegion");
         kinesisStreamName = configUtils.getProperty(config, "streamName");
-    }
-
-    public static void main(String[] args) {
-        try {
-            Producer producer = new Producer();
-            int putRequestCount = 10;
-            int recordsInOnePutRequest = 1;
-            producer.produce(putRequestCount, recordsInOnePutRequest, 1000);
-        } catch (Exception e) {
-            System.err.println("Caught throwable while processing data.");
-            e.printStackTrace();
-            System.exit(1);
-        }
     }
 
     private void produce(int putRequestCount, int recordsInOnePutRequest, int delayMillis) throws Exception {

@@ -1,4 +1,4 @@
-package kinesis.v1.consumer;
+package tm.raftel.util.aws_kinesis;
 
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.services.kinesis.clientlibrary.lib.worker.InitialPositionInStream;
@@ -6,7 +6,7 @@ import com.amazonaws.services.kinesis.clientlibrary.lib.worker.InitialPositionIn
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 
-public class KinesisStreamConsumerBag {
+public class KinesisConsumerBag {
 
     private AWSCredentialsProvider awsCredentialsProvider;
     private String awsRegion;
@@ -20,10 +20,9 @@ public class KinesisStreamConsumerBag {
     private int checkpointMaxRetryCount = 10;
     private long checkpointRetryDelayMillis = 30000;
     private CharsetDecoder recordDataDecoder = Charset.forName("UTF8").newDecoder();
-    private KinesisStreamConsumer kinesisStreamConsumer;
+    private KinesisConsumer kinesisConsumer;
 
-    public KinesisStreamConsumerBag(AWSCredentialsProvider awsCredentialsProvider, String awsRegion,
-            String streamName, String consumerName) {
+    public KinesisConsumerBag(AWSCredentialsProvider awsCredentialsProvider, String awsRegion, String streamName, String consumerName) {
         this.awsCredentialsProvider = awsCredentialsProvider;
         this.awsRegion = awsRegion;
         this.streamName = streamName;
@@ -56,12 +55,12 @@ public class KinesisStreamConsumerBag {
         this.initialLeaseTableWriteCapacity = initialLeaseTableWriteCapacity;
     }
 
-    public KinesisStreamConsumer getKinesisStreamConsumer() {
-        return kinesisStreamConsumer;
+    public KinesisConsumer getKinesisConsumer() {
+        return kinesisConsumer;
     }
 
-    void setKinesisStreamConsumer(KinesisStreamConsumer kinesisStreamConsumer) {
-        this.kinesisStreamConsumer = kinesisStreamConsumer;
+    void setKinesisConsumer(KinesisConsumer kinesisConsumer) {
+        this.kinesisConsumer = kinesisConsumer;
     }
 
     public AWSCredentialsProvider getAwsCredentialsProvider() {
