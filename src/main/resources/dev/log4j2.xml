@@ -32,13 +32,14 @@
     </Appenders>
     <Loggers>
         <Logger name="tm.raftel.util.aws_kinesis">
+            <!--            <AppenderRef ref="Console"/>-->
             <AppenderRef ref="FileInfo"/>
-            <AppenderRef ref="FileError"/>
-            <AppenderRef ref="Console"/>
+            <!--            <AppenderRef ref="FileError"/>-->
+
         </Logger>
         <Root>
+            <!--            <AppenderRef ref="Console"/>-->
             <AppenderRef ref="SystemInfo"/>
-            <AppenderRef ref="Console"/>
         </Root>
     </Loggers>
 </Configuration>

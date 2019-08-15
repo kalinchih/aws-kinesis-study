@@ -38,7 +38,7 @@ public class KinesisRecordProcessor implements IRecordProcessor {
     @Override
     public void processRecords(List<Record> records, IRecordProcessorCheckpointer checkpointer) {
         String consumerWorkerId = bag.getKinesisConsumer().getWorkerId();
-        logUtils.info(String.format("Start to process %s records. KinesisConsumerLog=%s.", records.size(),
+        LOG.info(String.format("Start to process %s records. KinesisConsumerLog=%s.", records.size(),
                 new KinesisConsumerLog(bag, shardId, consumerWorkerId)));
         String ongoingSequenceNumber = null;
         String completedSequenceNumber = null;
