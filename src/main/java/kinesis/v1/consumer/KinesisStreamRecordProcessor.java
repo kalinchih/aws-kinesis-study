@@ -43,9 +43,10 @@ public class KinesisStreamRecordProcessor implements IRecordProcessor {
         String ongoingSequenceNumber = null;
         String completedSequenceNumber = null;
         try {
-            for (Record record : records) {
+            for (int i = 0; i < records.size(); i++) {
+                Record record = records.get(i);
                 ongoingSequenceNumber = record.getSequenceNumber();
-                processSingleRecord(record);
+                processSingleRecord(record, i);
                 completedSequenceNumber = record.getSequenceNumber();
             }
             checkpoint(checkpointer, completedSequenceNumber);
@@ -54,11 +55,7 @@ public class KinesisStreamRecordProcessor implements IRecordProcessor {
             if (completedSequenceNumber != null) {
                 checkpoint(checkpointer, completedSequenceNumber);
             }
-            try {
-                Thread.sleep(bag.getProcessRetryDelayMillis());
-            } catch (InterruptedException interruptedException) {
-                // ignore
-            }
+            shutdown(checkpointer, ShutdownReason.REQUESTED);
         }
     }
 
@@ -66,11 +63,14 @@ public class KinesisStreamRecordProcessor implements IRecordProcessor {
      * @param record
      * @throws Exception
      */
-    private void processSingleRecord(Record record) throws Exception {
+    private void processSingleRecord(Record record, int indexInRecords) throws Exception {
         // TODO: biz logic here
         String recordData = bag.getRecordDataDecoder().decode(record.getData()).toString();
-        System.out.println(String.format("Processed %s with sequenceNumber: %s.", recordData,
+        System.out.println(String.format("Processing %s with sequenceNumber: %s.", recordData,
                 record.getSequenceNumber()));
+        //        if (indexInRecords > 1) {
+        //            throw new Exception("GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG");
+        //        }
     }
 
     /**
@@ -125,17 +125,6 @@ public class KinesisStreamRecordProcessor implements IRecordProcessor {
     @Override
     public void shutdown(IRecordProcessorCheckpointer checkpointer, ShutdownReason reason) {
         // Not to checkpoint! processSingleRecord() should have the ability to handle re-poll/non-checkpoint records.
-        String consumerWorkerId = bag.getKinesisStreamConsumer().getWorkerId();
-        LOG.warn(String.format("Shutting down %s for shard: %s. Another %s will be re-created and started after %s " + "milliseconds.", consumerWorkerId, shardId, KinesisStreamConsumer.class.getSimpleName(), bag.getProcessRetryDelayMillis()));
-        bag.getKinesisStreamConsumer().shutdown();
-        try {
-            Thread.sleep(bag.getProcessRetryDelayMillis());
-        } catch (InterruptedException interruptedException) {
-            // ignore
-        }
-        LOG.warn(String.format("Restarting %s for shard: %s.", KinesisStreamConsumer.class.getSimpleName(), shardId));
-        // Create and start another KinesisStreamConsumer
-        KinesisStreamConsumer kinesisStreamConsumer = new KinesisStreamConsumer(bag);
-        kinesisStreamConsumer.start();
+        bag.getKinesisStreamConsumer().restart(shardId, reason);
     }
 }

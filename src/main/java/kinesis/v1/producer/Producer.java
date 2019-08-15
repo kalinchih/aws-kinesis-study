@@ -36,8 +36,8 @@ public class Producer {
     public static void main(String[] args) {
         try {
             Producer producer = new Producer();
-            int putRequestCount = 100;
-            int recordsInOnePutRequest = 2;
+            int putRequestCount = 10;
+            int recordsInOnePutRequest = 1;
             producer.produce(putRequestCount, recordsInOnePutRequest, 100);
         } catch (Exception e) {
             System.err.println("Caught throwable while processing data.");
