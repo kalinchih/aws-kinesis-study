@@ -7,44 +7,39 @@ import com.amazonaws.services.kinesis.clientlibrary.interfaces.IRecordProcessor;
 import com.amazonaws.services.kinesis.clientlibrary.interfaces.IRecordProcessorCheckpointer;
 import com.amazonaws.services.kinesis.clientlibrary.lib.worker.ShutdownReason;
 import com.amazonaws.services.kinesis.model.Record;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.io.IOException;
-import java.nio.charset.CharacterCodingException;
-import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-/**
- * Display records and checkpoints progress.
- */
-public class KinesisStreamConsumer implements IRecordProcessor {
+public class KinesisStreamRecordProcessor implements IRecordProcessor {
 
-    private static final boolean IF_TIME_FIELD_ENABLED = Boolean.parseBoolean(System.getProperty("if.time.field.enabled", "false"));
-    private static final String TIME_FIELD_NAME = System.getProperty("time.field.name", "time");
-    private static final String TIME_FIELD_FORMAT = System.getProperty("time.field.format", "yyyy-MM-dd'T'HH:mm:ss.SSSxxxxx");
-    private static final Log LOG = LogFactory.getLog(KinesisStreamConsumer.class);
-    // Backoff and retry settings
-    private static final long BACKOFF_TIME_IN_MILLIS = 3000L;
-    private static final int NUM_RETRIES = 10;
-    private final CharsetDecoder decoder = Charset.forName("UTF-8").newDecoder();
-    private final DateTimeFormatter dtf = DateTimeFormatter.ofPattern(TIME_FIELD_FORMAT);
-    private final ObjectMapper mapper = new ObjectMapper();
+    private static final Log LOG = LogFactory.getLog(KinesisStreamRecordProcessor.class);
+    private long processRetryDelayMillis;
+    private int checkpointMaxRetryCount;
+    private long checkpointRetryDelayMillis;
+    private CharsetDecoder recordDataDecorder;
     private String shardId;
-    private long nextCheckpointTimeInMillis;
+    private String recordProcessorName;
+
+    KinesisStreamRecordProcessor(long processRetryDelayMillis, int checkpointMaxRetryCount,
+            long checkpointRetryDelayMillis, CharsetDecoder recordDataDecorder) {
+        this.processRetryDelayMillis = processRetryDelayMillis;
+        this.checkpointMaxRetryCount = checkpointMaxRetryCount;
+        this.checkpointRetryDelayMillis = checkpointRetryDelayMillis;
+        this.recordDataDecorder = recordDataDecorder;
+    }
 
     /**
      * {@inheritDoc}
      */
     @Override
     public void initialize(String shardId) {
-        LOG.info("Initializing record processor for shard: " + shardId);
         this.shardId = shardId;
+        this.recordProcessorName = this.getClass().getSimpleName();
+        LOG.info(String.format("Initialized %s for shard: %s, processRetryDelayMillis: %s, checkpointMaxRetryCount: " + "%s, checkpointRetryDelayMillis: %s.", recordProcessorName, shardId, processRetryDelayMillis, checkpointMaxRetryCount, checkpointRetryDelayMillis));
     }
 
     /**
@@ -52,22 +47,39 @@ public class KinesisStreamConsumer implements IRecordProcessor {
      */
     @Override
     public void processRecords(List<Record> records, IRecordProcessorCheckpointer checkpointer) {
-        LOG.info("Processing " + records.size() + " records from " + shardId);
-        // Process records and perform all exception handling.
-        processRecordsWithRetries(records);
-        checkpoint(checkpointer);
+        LOG.info(String.format("%s processing %s records from shard: %s.", recordProcessorName, records.size(),
+                shardId));
+        String processingSequenceNumber = null;
+        String processedSequenceNumber = null;
+        try {
+            for (Record record : records) {
+                processingSequenceNumber = record.getSequenceNumber();
+                processSingleRecord(record);
+                processedSequenceNumber = record.getSequenceNumber();
+            }
+            checkpoint(checkpointer, processedSequenceNumber);
+        } catch (Exception e) {
+            LOG.error(String.format("%s encounter exception when processing record with sequenceNumber: %s, shard: " + "%s" + ".", recordProcessorName, processingSequenceNumber, shardId));
+            if (processedSequenceNumber != null) {
+                checkpoint(checkpointer, processedSequenceNumber);
+            }
+            try {
+                Thread.sleep(processRetryDelayMillis);
+            } catch (InterruptedException interruptedException) {
+                // ignore
+            }
+        }
     }
 
     /**
-     * {@inheritDoc}
+     * @param record
+     * @throws Exception
      */
-    @Override
-    public void shutdown(IRecordProcessorCheckpointer checkpointer, ShutdownReason reason) {
-        LOG.info("Shutting down record processor for shard: " + shardId);
-        // Important to checkpoint after reaching end of shard, so we can start processing data from child shards.
-        if (reason == ShutdownReason.TERMINATE) {
-            checkpoint(checkpointer);
-        }
+    private void processSingleRecord(Record record) throws Exception {
+        // TODO: biz logic here
+        String recordData = recordDataDecorder.decode(record.getData()).toString();
+        System.out.println(String.format("Processed %s with sequenceNumber: %s.", recordData,
+                record.getSequenceNumber()));
     }
 
     /**
@@ -75,98 +87,52 @@ public class KinesisStreamConsumer implements IRecordProcessor {
      *
      * @param checkpointer
      */
-    private void checkpoint(IRecordProcessorCheckpointer checkpointer) {
-        LOG.info("Checkpointing shard " + shardId);
-        for (int i = 0; i < NUM_RETRIES; i++) {
+    private void checkpoint(IRecordProcessorCheckpointer checkpointer, String sequenceNumber) {
+        for (int i = 0; i < checkpointMaxRetryCount; i++) {
             try {
-                LOG.info("Start to checkpoint(), sequenceNumber: " + checkpointer.prepareCheckpoint().getPendingCheckpoint().getSequenceNumber());
-                checkpointer.checkpoint();
+                LOG.info(String.format("%s checkpoint shard: %s, sequenceNumber: %s.", recordProcessorName, shardId,
+                        checkpointer.prepareCheckpoint().getPendingCheckpoint().getSequenceNumber()));
+                if (StringUtils.isNotBlank(sequenceNumber)) {
+                    checkpointer.checkpoint(sequenceNumber);
+                } else {
+                    checkpointer.checkpoint();
+                }
                 break;
-            } catch (ShutdownException se) {
+            } catch (ShutdownException shutdownException) {
                 // Ignore checkpoint if the processor instance has been shutdown (fail over).
-                LOG.info("Caught shutdown exception, skipping checkpoint.", se);
+                LOG.info(String.format("%s caught shutdown exception, skipping checkpoint. shard: %s.",
+                        recordProcessorName, shardId), shutdownException);
                 break;
-            } catch (ThrottlingException e) {
+            } catch (ThrottlingException throttlingException) {
                 // Backoff and re-attempt checkpoint upon transient failures
-                if (i >= (NUM_RETRIES - 1)) {
-                    LOG.error("Checkpoint failed after " + (i + 1) + "attempts.", e);
+                if (i >= (checkpointMaxRetryCount - 1)) {
+                    LOG.error(String.format("%s checkpoint failed after %s attempts. shard: %s.", recordProcessorName
+                            , (i + 1), shardId), throttlingException);
                     break;
                 } else {
-                    LOG.info("Transient issue when checkpointing - attempt " + (i + 1) + " of " + NUM_RETRIES, e);
+                    LOG.warn(String.format("%s checkpoint failed. attempts: %/%s, shard: %s.", recordProcessorName,
+                            (i + 1), checkpointMaxRetryCount, shardId), throttlingException);
                 }
-            } catch (InvalidStateException e) {
+            } catch (InvalidStateException invalidStateException) {
                 // This indicates an issue with the DynamoDB table (check for table, provisioned IOPS).
-                LOG.error("Cannot save checkpoint to the DynamoDB table used by the Amazon Kinesis Client Library.", e);
+                LOG.error(String.format("%s cannot save checkpoint to the DynamoDB table used by the KCL. shard: %s."
+                        , recordProcessorName, shardId), invalidStateException);
                 break;
             }
             try {
-                Thread.sleep(BACKOFF_TIME_IN_MILLIS);
-            } catch (InterruptedException e) {
-                LOG.debug("Interrupted sleep", e);
+                Thread.sleep(checkpointRetryDelayMillis);
+            } catch (InterruptedException interruptedException) {
+                // ignore
             }
         }
     }
 
     /**
-     * Process records performing retries as needed. Skip "poison pill" records.
-     *
-     * @param records Data records to be processed.
+     * {@inheritDoc}
      */
-    private void processRecordsWithRetries(List<Record> records) {
-        for (Record record : records) {
-            boolean processedSuccessfully = false;
-            for (int i = 0; i < NUM_RETRIES; i++) {
-                try {
-                    processSingleRecord(record);
-                    processedSuccessfully = true;
-                    break;
-                } catch (Throwable t) {
-                    LOG.warn("Caught throwable while processing record " + record, t);
-                }
-                // backoff if we encounter an exception.
-                try {
-                    Thread.sleep(BACKOFF_TIME_IN_MILLIS);
-                } catch (InterruptedException e) {
-                    LOG.debug("Interrupted sleep", e);
-                }
-            }
-            if (!processedSuccessfully) {
-                LOG.error("Couldn't process record " + record + ". Skipping the record.");
-            }
-        }
-    }
-
-    /**
-     * Process a single record.
-     *
-     * @param record The record to be processed.
-     */
-    private void processSingleRecord(Record record) {
-        String data = null;
-        try {
-            // For this app, we interpret the payload as UTF-8 chars.
-            data = decoder.decode(record.getData()).toString();
-            // Assume this record including time field and log its age.
-            JsonNode jsonData = mapper.readTree(data);
-            long approximateArrivalTimestamp = record.getApproximateArrivalTimestamp().getTime();
-            long currentTime = System.currentTimeMillis();
-            long ageOfRecordInMillisFromArrival = currentTime - approximateArrivalTimestamp;
-            if (IF_TIME_FIELD_ENABLED) {
-                long recordCreateTime = ZonedDateTime.parse(jsonData.get(TIME_FIELD_NAME).asText(), dtf).toInstant().toEpochMilli();
-                long ageOfRecordInMillis = currentTime - recordCreateTime;
-                System.out.println(
-                        "---\nShard: " + shardId + ", PartitionKey: " + record.getPartitionKey() + ", SequenceNumber: " + record.getSequenceNumber() +
-                                "\nCreated " + ageOfRecordInMillis + " milliseconds ago. Arrived " + ageOfRecordInMillisFromArrival +
-                                " milliseconds ago.\n" + data);
-            } else {
-                System.out.println(
-                        "---\nShard: " + shardId + ", PartitionKey: " + record.getPartitionKey() + ", SequenceNumber: " + record.getSequenceNumber() +
-                                "\nArrived " + ageOfRecordInMillisFromArrival + " milliseconds ago.\n" + data);
-            }
-        } catch (CharacterCodingException e) {
-            LOG.error("Malformed data: " + data, e);
-        } catch (IOException e) {
-            LOG.info("Record does not match sample record format. Ignoring record with data; " + data);
-        }
+    @Override
+    public void shutdown(IRecordProcessorCheckpointer checkpointer, ShutdownReason reason) {
+        LOG.info(String.format("Shutting down %s for shard: %s.", recordProcessorName, shardId));
+        // Not to checkpoint! processSingleRecord() should have the ability to handle re-poll/non-checkpoint records.
     }
 }
