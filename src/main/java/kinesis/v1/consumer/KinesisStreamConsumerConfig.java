@@ -12,12 +12,12 @@ public class KinesisStreamConsumerConfig {
     private String awsRegion;
     private String streamName;
     private String consumerName;
+    private InitialPositionInStream initialPositionInStream = InitialPositionInStream.TRIM_HORIZON;
     private int maxPollRecordCount = 100;
     private long processRetryDelayMillis = 60000;
     private int checkpointMaxRetryCount = 10;
-    private long checkpointRetryDelayMillis = 1000;
+    private long checkpointRetryDelayMillis = 30000;
     private CharsetDecoder recordDataDecorder = Charset.forName("UTF-8").newDecoder();
-    private InitialPositionInStream initialPositionInStream = InitialPositionInStream.TRIM_HORIZON;
 
     public KinesisStreamConsumerConfig(AWSCredentialsProvider awsCredentialsProvider, String awsRegion,
             String streamName, String consumerName) {
@@ -83,7 +83,7 @@ public class KinesisStreamConsumerConfig {
     }
 
     /**
-     * Default value: 1000
+     * Default value: 30000
      *
      * @return
      */
@@ -96,7 +96,7 @@ public class KinesisStreamConsumerConfig {
     }
 
     /**
-     * Default value: Charset.forName("UTF-8").newDecoder()
+     * Default value: Charset.forName("UTF8").newDecoder()
      *
      * @return
      */
