@@ -19,39 +19,46 @@ public class Main {
      * Consumer method to start workers
      *
      * @param args
-     *
      * @throws UnknownHostException
      */
     public static void main(String[] args) {
         try {
-            // Load application config
+            // Load settings from config file
             ConfigUtils configUtils = ConfigUtils.build();
             Properties config = configUtils.getProperties("config.properties");
-            String accessKeyId = configUtils.getProperty(config, "aws.credential.access_key_id");
-            String accessSecretKey = configUtils.getProperty(config, "aws.credential.access_secret_key");
-            String awsRegion = configUtils.getProperty(config, "aws.credential.region");
-            String streamName = configUtils.getProperty(config, "aws.kinesis.stream_name");
-            String consumerName = configUtils.getProperty(config, "aws.kinesis.consumer_name");
-            String initialPositionInStream = configUtils.getProperty(config, "aws.kinesis" + ".consumer_initial_position_in_stream");
-            int maxPollRecordCount = Integer.parseInt(configUtils.getProperty(config, "aws.kinesis.consumer_max_poll_record_count"));
-            long processRetryDelayMillis = Long.parseLong(configUtils.getProperty(config, "aws.kinesis.consumer_process_retry_delay_millis"));
-            int checkpointMaxRetryCount = Integer.parseInt(configUtils.getProperty(config, "aws.kinesis.consumer_checkpoint_max_retry_count"));
-            long checkpointRetryDelayMillis = Long.parseLong(configUtils.getProperty(config, "aws.kinesis.consumer_checkpoint_retry_delay_millis"));
-            String recordDataDecoderCharset = configUtils.getProperty(config, "aws.kinesis.consumer_record_data_decorder_charset");
-            // Create KinesisStreamConsumerConfig
+            // Create bag
+            String accessKeyId = configUtils.getProperty(config, "accessKeyId");
+            String accessSecretKey = configUtils.getProperty(config, "accessSecretKey");
             AWSCredentials awsCredentials = new BasicAWSCredentials(accessKeyId, accessSecretKey);
-            AWSStaticCredentialsProvider awsStaticCredentialsProvider = new AWSStaticCredentialsProvider(awsCredentials);
-            KinesisStreamConsumerConfig kinesisStreamConsumerConfig =
-                    new KinesisStreamConsumerConfig(awsStaticCredentialsProvider, awsRegion, streamName, consumerName);
-            // Set KinesisStreamConsumerConfig optional config
-            kinesisStreamConsumerConfig.setInitialPositionInStream(InitialPositionInStream.valueOf(initialPositionInStream));
-            kinesisStreamConsumerConfig.setMaxPollRecordCount(maxPollRecordCount);
-            kinesisStreamConsumerConfig.setProcessRetryDelayMillis(processRetryDelayMillis);
-            kinesisStreamConsumerConfig.setCheckpointMaxRetryCount(checkpointMaxRetryCount);
-            kinesisStreamConsumerConfig.setCheckpointRetryDelayMillis(checkpointRetryDelayMillis);
-            kinesisStreamConsumerConfig.setRecordDataDecorder(Charset.forName(recordDataDecoderCharset).newDecoder());
+            AWSStaticCredentialsProvider awsStaticCredentialsProvider =
+                    new AWSStaticCredentialsProvider(awsCredentials);
+            String awsRegion = configUtils.getProperty(config, "awsRegion");
+            String streamName = configUtils.getProperty(config, "streamName");
+            String consumerName = configUtils.getProperty(config, "consumerName");
+            KinesisStreamConsumerBag bag = new KinesisStreamConsumerBag(awsStaticCredentialsProvider, awsRegion,
+                    streamName, consumerName);
+            // Set bag optional settings
+            String initialPositionInStream = configUtils.getProperty(config, "initialPositionInStream");
+            bag.setInitialPositionInStream(InitialPositionInStream.valueOf(initialPositionInStream));
+            int initialLeaseTableReadCapacity = Integer.parseInt(configUtils.getProperty(config,
+                    "initialLeaseTableReadCapacity"));
+            bag.setInitialLeaseTableReadCapacity(initialLeaseTableReadCapacity);
+            int initialLeaseTableWriteCapacity = Integer.parseInt(configUtils.getProperty(config,
+                    "initialLeaseTableWriteCapacity"));
+            bag.setInitialLeaseTableWriteCapacity(initialLeaseTableWriteCapacity);
+            int maxPollRecordCount = Integer.parseInt(configUtils.getProperty(config, "maxPollRecordCount"));
+            bag.setMaxPollRecordCount(maxPollRecordCount);
+            long processRetryDelayMillis = Long.parseLong(configUtils.getProperty(config, "processRetryDelayMillis"));
+            bag.setProcessRetryDelayMillis(processRetryDelayMillis);
+            int checkpointMaxRetryCount = Integer.parseInt(configUtils.getProperty(config, "checkpointMaxRetryCount"));
+            bag.setCheckpointMaxRetryCount(checkpointMaxRetryCount);
+            long checkpointRetryDelayMillis = Long.parseLong(configUtils.getProperty(config,
+                    "checkpointRetryDelayMillis"));
+            bag.setCheckpointRetryDelayMillis(checkpointRetryDelayMillis);
+            String recordDataDecoderCharset = configUtils.getProperty(config, "recordDataDecoder");
+            bag.setRecordDataDecoder(Charset.forName(recordDataDecoderCharset).newDecoder());
             // Create and start KinesisStreamConsumer
-            KinesisStreamConsumer kinesisStreamConsumer = new KinesisStreamConsumer(kinesisStreamConsumerConfig);
+            KinesisStreamConsumer kinesisStreamConsumer = new KinesisStreamConsumer(bag);
             kinesisStreamConsumer.start();
         } catch (Exception e) {
             System.err.println("Caught throwable while processing data.");

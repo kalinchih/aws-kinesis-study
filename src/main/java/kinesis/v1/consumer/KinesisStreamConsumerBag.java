@@ -6,24 +6,62 @@ import com.amazonaws.services.kinesis.clientlibrary.lib.worker.InitialPositionIn
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 
-public class KinesisStreamConsumerConfig {
+public class KinesisStreamConsumerBag {
 
     private AWSCredentialsProvider awsCredentialsProvider;
     private String awsRegion;
     private String streamName;
     private String consumerName;
     private InitialPositionInStream initialPositionInStream = InitialPositionInStream.TRIM_HORIZON;
+    private int initialLeaseTableReadCapacity = 1;
+    private int initialLeaseTableWriteCapacity = 1;
     private int maxPollRecordCount = 100;
     private long processRetryDelayMillis = 60000;
     private int checkpointMaxRetryCount = 10;
     private long checkpointRetryDelayMillis = 30000;
-    private CharsetDecoder recordDataDecorder = Charset.forName("UTF8").newDecoder();
+    private CharsetDecoder recordDataDecoder = Charset.forName("UTF8").newDecoder();
+    private KinesisStreamConsumer kinesisStreamConsumer;
 
-    public KinesisStreamConsumerConfig(AWSCredentialsProvider awsCredentialsProvider, String awsRegion, String streamName, String consumerName) {
+    public KinesisStreamConsumerBag(AWSCredentialsProvider awsCredentialsProvider, String awsRegion,
+            String streamName, String consumerName) {
         this.awsCredentialsProvider = awsCredentialsProvider;
         this.awsRegion = awsRegion;
         this.streamName = streamName;
         this.consumerName = consumerName;
+    }
+
+    /**
+     * Default value: 1
+     *
+     * @return
+     */
+    public int getInitialLeaseTableReadCapacity() {
+        return initialLeaseTableReadCapacity;
+    }
+
+    public void setInitialLeaseTableReadCapacity(int initialLeaseTableReadCapacity) {
+        this.initialLeaseTableReadCapacity = initialLeaseTableReadCapacity;
+    }
+
+    /**
+     * Default value: 1
+     *
+     * @return
+     */
+    public int getInitialLeaseTableWriteCapacity() {
+        return initialLeaseTableWriteCapacity;
+    }
+
+    public void setInitialLeaseTableWriteCapacity(int initialLeaseTableWriteCapacity) {
+        this.initialLeaseTableWriteCapacity = initialLeaseTableWriteCapacity;
+    }
+
+    public KinesisStreamConsumer getKinesisStreamConsumer() {
+        return kinesisStreamConsumer;
+    }
+
+    void setKinesisStreamConsumer(KinesisStreamConsumer kinesisStreamConsumer) {
+        this.kinesisStreamConsumer = kinesisStreamConsumer;
     }
 
     public AWSCredentialsProvider getAwsCredentialsProvider() {
@@ -99,12 +137,12 @@ public class KinesisStreamConsumerConfig {
      *
      * @return
      */
-    public CharsetDecoder getRecordDataDecorder() {
-        return recordDataDecorder;
+    public CharsetDecoder getRecordDataDecoder() {
+        return recordDataDecoder;
     }
 
-    public void setRecordDataDecorder(CharsetDecoder recordDataDecorder) {
-        this.recordDataDecorder = recordDataDecorder;
+    public void setRecordDataDecoder(CharsetDecoder recordDataDecoder) {
+        this.recordDataDecoder = recordDataDecoder;
     }
 
     /**

@@ -7,36 +7,53 @@ import com.amazonaws.services.kinesis.metrics.impl.NullMetricsFactory;
 import com.amazonaws.services.kinesis.metrics.interfaces.IMetricsFactory;
 
 import java.net.InetAddress;
+import java.time.Instant;
 import java.util.UUID;
 
 public final class KinesisStreamConsumer {
 
-    private KinesisStreamConsumerConfig config;
+    private KinesisStreamConsumerBag bag;
+    private String workerId;
+    private Worker worker;
 
-    public KinesisStreamConsumer(KinesisStreamConsumerConfig kinesisStreamConsumerConfig) throws Exception {
-        this.config = kinesisStreamConsumerConfig;
+    public KinesisStreamConsumer(KinesisStreamConsumerBag bag) {
+        this.bag = bag;
     }
 
-    public void start() throws KinesisStreamConsumerInitException {
+    Worker getWorker() {
+        return worker;
+    }
+
+    public String getWorkerId() {
+        return workerId;
+    }
+
+    public void start() {
+        String ip;
         try {
-            String workerId = String.format("%s-%s", InetAddress.getLocalHost().getCanonicalHostName(),
-                    UUID.randomUUID());
-            KinesisClientLibConfiguration kclConfiguration =
-                    new KinesisClientLibConfiguration(config.getConsumerName(), config.getStreamName(),
-                            config.getAwsCredentialsProvider(), workerId);
-            kclConfiguration.withRegionName(config.getAwsRegion());
-            kclConfiguration.withInitialPositionInStream(config.getInitialPositionInStream());
-            kclConfiguration.withMaxRecords(config.getMaxPollRecordCount());
-            IRecordProcessorFactory recordProcessorFactory =
-                    new KinesisStreamRecordProcessorFactory(config.getProcessRetryDelayMillis(),
-                            config.getCheckpointMaxRetryCount(), config.getCheckpointRetryDelayMillis(),
-                            config.getRecordDataDecorder());
-            IMetricsFactory metricsFactory = new NullMetricsFactory();
-            Worker worker =
-                    new Worker.Builder().recordProcessorFactory(recordProcessorFactory).config(kclConfiguration).metricsFactory(metricsFactory).build();
-            worker.run();
+            ip = InetAddress.getLocalHost().getCanonicalHostName();
         } catch (Exception e) {
-            throw new KinesisStreamConsumerInitException(e);
+            ip = "";
         }
+        Instant instant = Instant.now();
+        workerId = String.format("%s-%s-%s", ip, instant.toEpochMilli(), UUID.randomUUID());
+        KinesisClientLibConfiguration kclConfiguration = new KinesisClientLibConfiguration(bag.getConsumerName(),
+                bag.getStreamName(), bag.getAwsCredentialsProvider(), workerId);
+        kclConfiguration.withRegionName(bag.getAwsRegion());
+        kclConfiguration.withInitialPositionInStream(bag.getInitialPositionInStream());
+        kclConfiguration.withMaxRecords(bag.getMaxPollRecordCount());
+        kclConfiguration.withInitialLeaseTableReadCapacity(bag.getInitialLeaseTableReadCapacity());
+        kclConfiguration.withInitialLeaseTableWriteCapacity(bag.getInitialLeaseTableWriteCapacity());
+        IRecordProcessorFactory recordProcessorFactory = new KinesisStreamRecordProcessorFactory(bag);
+        IMetricsFactory metricsFactory = new NullMetricsFactory();
+        worker =
+                new Worker.Builder().recordProcessorFactory(recordProcessorFactory).config(kclConfiguration).metricsFactory(metricsFactory).build();
+        // Put self in bag to create and start another KinesisStreamConsumer when shutdown
+        bag.setKinesisStreamConsumer(this);
+        worker.run();
+    }
+
+    void shutdown() {
+        worker.shutdown();
     }
 }
