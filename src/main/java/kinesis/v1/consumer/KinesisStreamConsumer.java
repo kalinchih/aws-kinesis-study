@@ -11,7 +11,7 @@ import org.apache.commons.logging.LogFactory;
 
 import java.net.InetAddress;
 import java.time.Instant;
-import java.util.UUID;
+import java.util.Random;
 
 public final class KinesisStreamConsumer {
 
@@ -46,7 +46,8 @@ public final class KinesisStreamConsumer {
             ip = "";
         }
         Instant instant = Instant.now();
-        String workerId = String.format("%s-%s-%s", ip, instant.toEpochMilli(), UUID.randomUUID());
+        String workerId = String.format("ConsumerWorker@%s-Since%s#%s", ip, instant.toEpochMilli(),
+                new Random().nextInt(100));
         KinesisClientLibConfiguration kclConfiguration = new KinesisClientLibConfiguration(bag.getConsumerName(),
                 bag.getStreamName(), bag.getAwsCredentialsProvider(), workerId);
         kclConfiguration.withRegionName(bag.getAwsRegion());
