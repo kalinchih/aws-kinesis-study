@@ -17,10 +17,9 @@ public class KinesisStreamConsumerConfig {
     private long processRetryDelayMillis = 60000;
     private int checkpointMaxRetryCount = 10;
     private long checkpointRetryDelayMillis = 30000;
-    private CharsetDecoder recordDataDecorder = Charset.forName("UTF-8").newDecoder();
+    private CharsetDecoder recordDataDecorder = Charset.forName("UTF8").newDecoder();
 
-    public KinesisStreamConsumerConfig(AWSCredentialsProvider awsCredentialsProvider, String awsRegion,
-            String streamName, String consumerName) {
+    public KinesisStreamConsumerConfig(AWSCredentialsProvider awsCredentialsProvider, String awsRegion, String streamName, String consumerName) {
         this.awsCredentialsProvider = awsCredentialsProvider;
         this.awsRegion = awsRegion;
         this.streamName = streamName;

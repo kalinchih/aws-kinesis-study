@@ -37,7 +37,7 @@ public class Producer {
         try {
             Producer producer = new Producer();
             int putRequestCount = 100;
-            int recordsInOnePutRequest = 1;
+            int recordsInOnePutRequest = 2;
             producer.produce(putRequestCount, recordsInOnePutRequest, 10);
         } catch (Exception e) {
             System.err.println("Caught throwable while processing data.");

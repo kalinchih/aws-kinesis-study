@@ -49,19 +49,19 @@ public class KinesisStreamRecordProcessor implements IRecordProcessor {
     public void processRecords(List<Record> records, IRecordProcessorCheckpointer checkpointer) {
         LOG.info(String.format("%s processing %s records from shard: %s.", recordProcessorName, records.size(),
                 shardId));
-        String processingSequenceNumber = null;
-        String processedSequenceNumber = null;
+        String ongoingSequenceNumber = null;
+        String completedSequenceNumber = null;
         try {
             for (Record record : records) {
-                processingSequenceNumber = record.getSequenceNumber();
+                ongoingSequenceNumber = record.getSequenceNumber();
                 processSingleRecord(record);
-                processedSequenceNumber = record.getSequenceNumber();
+                completedSequenceNumber = record.getSequenceNumber();
             }
-            checkpoint(checkpointer, processedSequenceNumber);
+            checkpoint(checkpointer, completedSequenceNumber);
         } catch (Exception e) {
-            LOG.error(String.format("%s encounter exception when processing record with sequenceNumber: %s, shard: " + "%s" + ".", recordProcessorName, processingSequenceNumber, shardId));
-            if (processedSequenceNumber != null) {
-                checkpoint(checkpointer, processedSequenceNumber);
+            LOG.error(String.format("%s encounter exception when processing record with sequenceNumber: %s, shard: " + "%s" + ".", recordProcessorName, ongoingSequenceNumber, shardId));
+            if (completedSequenceNumber != null) {
+                checkpoint(checkpointer, completedSequenceNumber);
             }
             try {
                 Thread.sleep(processRetryDelayMillis);
