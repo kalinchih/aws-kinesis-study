@@ -6,15 +6,12 @@ import com.amazonaws.services.kinesis.clientlibrary.interfaces.IRecordProcessorC
 import com.amazonaws.services.kinesis.clientlibrary.lib.worker.ShutdownReason;
 import com.amazonaws.services.kinesis.model.Record;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import tm.raftel.util.log.LogUtils;
 
 import java.util.List;
 
 public class KinesisRecordProcessor implements IRecordProcessor {
 
-    private static final Log LOG = LogFactory.getLog(KinesisConsumer.class.getPackage().getName());
     private final LogUtils logUtils = LogUtils.build();
     private KinesisConsumerBag bag;
     private String shardId;
@@ -38,7 +35,7 @@ public class KinesisRecordProcessor implements IRecordProcessor {
     @Override
     public void processRecords(List<Record> records, IRecordProcessorCheckpointer checkpointer) {
         String consumerWorkerId = bag.getKinesisConsumer().getWorkerId();
-        LOG.info(String.format("Start to process %s records. KinesisConsumerLog=%s.", records.size(),
+        logUtils.info(String.format("Start to process %s records. KinesisConsumerLog=%s.", records.size(),
                 new KinesisConsumerLog(bag, shardId, consumerWorkerId)));
         String ongoingSequenceNumber = null;
         String completedSequenceNumber = null;
@@ -63,13 +60,13 @@ public class KinesisRecordProcessor implements IRecordProcessor {
 
     private void processSingleRecord(Record record, int indexInRecords) throws Exception {
         String recordData = bag.getRecordDataDecoder().decode(record.getData()).toString();
-        LOG.info(String.format("Start to process record. KinesisConsumerLog=%s.",
+        logUtils.info(String.format("Start to process record. KinesisConsumerLog=%s.",
                 new KinesisConsumerLog(bag, shardId, bag.getKinesisConsumer().getWorkerId(), record.getSequenceNumber())));
         // TODO: biz logic here
         //
-        //        if (indexInRecords > 1) {
-        //            throw new Exception("GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG");
-        //        }
+        if (indexInRecords >= 0) {
+            throw new Exception("GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG");
+        }
     }
 
     private void checkpoint(IRecordProcessorCheckpointer checkpointer, String sequenceNumber) {

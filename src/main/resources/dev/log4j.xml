@@ -1,32 +1,71 @@
 <!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
 <log4j:configuration xmlns:log4j='http://jakarta.apache.org/log4j/'>
 
-    <appender name="Console" class="org.apache.log4j.ConsoleAppender">
+    <appender name="FileInfo" class="org.apache.log4j.RollingFileAppender">
+        <param name="append" value="true"/>
+        <param name="maxFileSize" value="10MB"/>
+        <param name="maxBackupIndex" value="50"/>
+        <param name="file" value="logs/dev-info.log"/>
         <layout class="org.apache.log4j.PatternLayout">
-            <param name="ConversionPattern" value="[%d{dd HH:mm:ss,SSS\} %-5p] [%t] %c{2\} - %m%n"/>
+            <param name="ConversionPattern" value="%m%n"/>
         </layout>
         <filter class="org.apache.log4j.varia.LevelRangeFilter">
-            <param name="levelMin" value="debug"/>
-            <param name="levelMax" value="warn"/>
+            <param name="levelMin" value="info"/>
+            <param name="levelMax" value="info"/>
             <param name="AcceptOnMatch" value="true"/>
         </filter>
     </appender>
-    <appender name="FileInfo" class="org.apache.log4j.RollingFileAppender">
-        <param name="File" value=".log/info.log"/>
-        <param name="Append" value="true"/>
-        <param name="MaxBackupIndex" value="50"/>
+    <appender name="FileError" class="org.apache.log4j.RollingFileAppender">
+        <param name="append" value="true"/>
+        <param name="maxFileSize" value="10MB"/>
+        <param name="maxBackupIndex" value="50"/>
+        <param name="file" value="logs/dev-error.log"/>
         <layout class="org.apache.log4j.PatternLayout">
-            <param name="ConversionPattern" value="%p (%c:%L)- %m%n"/>
+            <param name="ConversionPattern" value="%m%n"/>
         </layout>
+        <filter class="org.apache.log4j.varia.LevelRangeFilter">
+            <param name="levelMin" value="warn"/>
+            <param name="levelMax" value="fatal"/>
+            <param name="AcceptOnMatch" value="true"/>
+        </filter>
+    </appender>
+    <appender name="FileSystem" class="org.apache.log4j.RollingFileAppender">
+        <param name="append" value="true"/>
+        <param name="maxFileSize" value="10MB"/>
+        <param name="maxBackupIndex" value="50"/>
+        <param name="file" value="logs/dev-system.log"/>
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%-5p- %d{yyyy-MM-dd HH:mm:ss} - [%t] %c{2\} - %m%n"/>
+        </layout>
+        <filter class="org.apache.log4j.varia.LevelRangeFilter">
+            <param name="levelMin" value="warn"/>
+            <param name="levelMax" value="fatal"/>
+            <param name="AcceptOnMatch" value="true"/>
+        </filter>
+    </appender>
+    <appender name="Console" class="org.apache.log4j.ConsoleAppender">
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%m%n"/>
+        </layout>
+        <filter class="org.apache.log4j.varia.LevelRangeFilter">
+            <param name="levelMin" value="debug"/>
+            <param name="levelMax" value="fatal"/>
+            <param name="AcceptOnMatch" value="true"/>
+        </filter>
     </appender>
 
 
     <logger name="info_logger" additivity="false">
-        <priority value="info"/>
+        <level value="info"/>
         <appender-ref ref="FileInfo"/>
     </logger>
+    <logger name="error_logger" additivity="false">
+        <level value="warn"/>
+        <appender-ref ref="FileError"/>
+    </logger>
     <root>
-        <priority value="info"/>
+        <level value="info"/>
+        <appender-ref ref="FileSystem"/>
         <appender-ref ref="Console"/>
     </root>
 

@@ -8,7 +8,6 @@ import tm.raftel.util.aws_kinesis.KinesisConsumer;
 import tm.raftel.util.aws_kinesis.KinesisConsumerBag;
 import tm.raftel.util.config.ConfigUtils;
 import tm.raftel.util.exception.ExceptionUtils;
-import tm.raftel.util.log.LogUtils;
 import tm.raftel.util.phase.PhaseUtils;
 
 import java.net.URL;
@@ -26,9 +25,7 @@ public class ConsumerApp {
             app.setupLog4j2();
             app.pollStream();
         } catch (Exception e) {
-            // TODO: alert
-            System.err.println(String.format("Fail to start %s. Error -> %s", ConsumerApp.class.getName(),
-                    ExceptionUtils.toStackTrace(e)));
+            System.err.println(String.format("Fail to start %s. Error -> %s", ConsumerApp.class.getName(), ExceptionUtils.toStackTrace(e)));
         }
     }
 
@@ -51,7 +48,6 @@ public class ConsumerApp {
                 throw new AppFatalException(exceptionMessage);
             }
             DOMConfigurator.configure(log4j2ConfigFileUrl);
-            LogUtils.build().info("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
         } catch (Exception e) {
             throw new AppFatalException(exceptionMessage, e);
         }
@@ -66,21 +62,17 @@ public class ConsumerApp {
             String accessKeyId = configUtils.getProperty(config, "accessKeyId");
             String accessSecretKey = configUtils.getProperty(config, "accessSecretKey");
             AWSCredentials awsCredentials = new BasicAWSCredentials(accessKeyId, accessSecretKey);
-            AWSStaticCredentialsProvider awsStaticCredentialsProvider =
-                    new AWSStaticCredentialsProvider(awsCredentials);
+            AWSStaticCredentialsProvider awsStaticCredentialsProvider = new AWSStaticCredentialsProvider(awsCredentials);
             String streamRegion = configUtils.getProperty(config, "streamRegion");
             String streamName = configUtils.getProperty(config, "streamName");
             String consumerName = configUtils.getProperty(config, "consumerName");
-            KinesisConsumerBag bag = new KinesisConsumerBag(awsStaticCredentialsProvider, streamRegion, streamName,
-                    consumerName);
+            KinesisConsumerBag bag = new KinesisConsumerBag(awsStaticCredentialsProvider, streamRegion, streamName, consumerName);
             // Set bag optional settings
             String initialPositionInStream = configUtils.getProperty(config, "initialPositionInStream");
             bag.setInitialPositionInStream(InitialPositionInStream.valueOf(initialPositionInStream));
-            int initialLeaseTableReadCapacity = Integer.parseInt(configUtils.getProperty(config,
-                    "initialLeaseTableReadCapacity"));
+            int initialLeaseTableReadCapacity = Integer.parseInt(configUtils.getProperty(config, "initialLeaseTableReadCapacity"));
             bag.setInitialLeaseTableReadCapacity(initialLeaseTableReadCapacity);
-            int initialLeaseTableWriteCapacity = Integer.parseInt(configUtils.getProperty(config,
-                    "initialLeaseTableWriteCapacity"));
+            int initialLeaseTableWriteCapacity = Integer.parseInt(configUtils.getProperty(config, "initialLeaseTableWriteCapacity"));
             bag.setInitialLeaseTableWriteCapacity(initialLeaseTableWriteCapacity);
             int maxPollRecordCount = Integer.parseInt(configUtils.getProperty(config, "maxPollRecordCount"));
             bag.setMaxPollRecordCount(maxPollRecordCount);
@@ -88,8 +80,7 @@ public class ConsumerApp {
             bag.setProcessRetryDelayMillis(processRetryDelayMillis);
             int checkpointMaxRetryCount = Integer.parseInt(configUtils.getProperty(config, "checkpointMaxRetryCount"));
             bag.setCheckpointMaxRetryCount(checkpointMaxRetryCount);
-            long checkpointRetryDelayMillis = Long.parseLong(configUtils.getProperty(config,
-                    "checkpointRetryDelayMillis"));
+            long checkpointRetryDelayMillis = Long.parseLong(configUtils.getProperty(config, "checkpointRetryDelayMillis"));
             bag.setCheckpointRetryDelayMillis(checkpointRetryDelayMillis);
             String recordDataDecoderCharset = configUtils.getProperty(config, "recordDataDecoder");
             bag.setRecordDataDecoder(Charset.forName(recordDataDecoderCharset).newDecoder());
