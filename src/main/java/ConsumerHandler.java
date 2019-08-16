@@ -1,7 +1,7 @@
 import com.amazonaws.services.kinesis.model.Record;
-import tm.raftel.util.aws_kinesis.KinesisConsumerHandler;
-import tm.raftel.util.config.ConfigUtils;
-import tm.raftel.util.log.LogUtils;
+import k0.util.aws_kinesis.KinesisConsumerHandler;
+import k0.util.config.ConfigUtils;
+import k0.util.log.LogUtils;
 
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;

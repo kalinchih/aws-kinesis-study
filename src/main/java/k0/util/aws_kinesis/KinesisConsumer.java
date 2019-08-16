@@ -1,4 +1,4 @@
-package tm.raftel.util.aws_kinesis;
+package k0.util.aws_kinesis;
 
 import com.amazonaws.services.kinesis.clientlibrary.interfaces.IRecordProcessorFactory;
 import com.amazonaws.services.kinesis.clientlibrary.lib.worker.KinesisClientLibConfiguration;
@@ -6,8 +6,8 @@ import com.amazonaws.services.kinesis.clientlibrary.lib.worker.ShutdownReason;
 import com.amazonaws.services.kinesis.clientlibrary.lib.worker.Worker;
 import com.amazonaws.services.kinesis.metrics.impl.NullMetricsFactory;
 import com.amazonaws.services.kinesis.metrics.interfaces.IMetricsFactory;
-import tm.raftel.util.date.DateUtils;
-import tm.raftel.util.random.RandomUtils;
+import k0.util.date.DateUtils;
+import k0.util.random.RandomUtils;
 
 import java.net.InetAddress;
 import java.time.Instant;

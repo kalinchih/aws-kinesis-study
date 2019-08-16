@@ -7,9 +7,9 @@ import com.amazonaws.services.kinesis.model.PutRecordsRequest;
 import com.amazonaws.services.kinesis.model.PutRecordsRequestEntry;
 import com.amazonaws.services.kinesis.model.PutRecordsResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import k0.util.config.ConfigUtils;
+import k0.util.phase.PhaseUtils;
 import org.apache.commons.lang3.StringUtils;
-import tm.raftel.util.config.ConfigUtils;
-import tm.raftel.util.phase.PhaseUtils;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;

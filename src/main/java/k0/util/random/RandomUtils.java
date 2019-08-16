@@ -1,4 +1,4 @@
-package tm.raftel.util.random;
+package k0.util.random;
 
 import org.apache.commons.lang3.StringUtils;
 

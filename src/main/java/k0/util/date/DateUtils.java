@@ -1,4 +1,4 @@
-package tm.raftel.util.date;
+package k0.util.date;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -28,9 +28,9 @@ public class DateUtils {
 
     /**
      * @param dateTimeFormatter DateTimeFormatter
-     *
      * @return UTC now text
-     * @see <a href="https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html">DateTimeFormatter</a>
+     * @see
+     * <a href="https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html">DateTimeFormatter</a>
      */
     public static String getUtcNowText(DateTimeFormatter dateTimeFormatter) {
         ZonedDateTime zonedDateTime = Instant.now().atZone(ZONE_ID_UTC);
@@ -45,10 +45,10 @@ public class DateUtils {
     /**
      * @param zoneId            ZoneId
      * @param dateTimeFormatter DateTimeFormatter
-     *
      * @return UTC now text
      * @see <a href="https://docs.oracle.com/javase/8/docs/api/java/util/TimeZone.html">TimeZone</a>
-     * @see <a href="https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html">DateTimeFormatter</a>
+     * @see
+     * <a href="https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html">DateTimeFormatter</a>
      */
     public static String getNowText(ZoneId zoneId, DateTimeFormatter dateTimeFormatter) {
         ZonedDateTime zonedDateTime = Instant.now().atZone(zoneId);

@@ -1,4 +1,4 @@
-package tm.raftel.util.config;
+package k0.util.config;
 
 public class ConfigFileNotFoundException extends Exception {
 

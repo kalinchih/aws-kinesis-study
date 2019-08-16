@@ -1,4 +1,4 @@
-package tm.raftel.util.exception;
+package k0.util.exception;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -12,13 +12,14 @@ public class ExceptionUtils {
         if (cause != null) {
             Throwable rootCause = cause.getCause();
             if (rootCause != null) {
-                try (StringWriter stringWriter = new StringWriter(); PrintWriter printWriter = new PrintWriter(stringWriter)) {
+                try (StringWriter stringWriter = new StringWriter(); PrintWriter printWriter =
+                        new PrintWriter(stringWriter)) {
                     rootCause.printStackTrace(printWriter);
                     causeString = stringWriter.toString();
                 } catch (IOException e) {
                     rootCause.addSuppressed(e);
-                    String.format("Failed to close StringWriter or PrinterWriter after printing stack trace. Stackstrace: %s. %s",
-                            rootCause.getMessage(), Arrays.toString(rootCause.getStackTrace()));
+                    String.format("Failed to close StringWriter or PrinterWriter after printing stack trace. " +
+                            "Stackstrace: %s. %s", rootCause.getMessage(), Arrays.toString(rootCause.getStackTrace()));
                 }
             } else {
                 causeString = String.format("%s.%s", cause.getMessage(), Arrays.toString(cause.getStackTrace()));

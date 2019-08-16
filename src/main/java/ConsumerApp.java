@@ -2,14 +2,14 @@ import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.kinesis.clientlibrary.lib.worker.InitialPositionInStream;
+import k0.util.aws_kinesis.KinesisConsumer;
+import k0.util.aws_kinesis.KinesisConsumerConfig;
+import k0.util.config.ConfigNotFoundException;
+import k0.util.config.ConfigUtils;
+import k0.util.exception.ExceptionUtils;
+import k0.util.phase.PhaseUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.xml.DOMConfigurator;
-import tm.raftel.util.aws_kinesis.KinesisConsumer;
-import tm.raftel.util.aws_kinesis.KinesisConsumerConfig;
-import tm.raftel.util.config.ConfigNotFoundException;
-import tm.raftel.util.config.ConfigUtils;
-import tm.raftel.util.exception.ExceptionUtils;
-import tm.raftel.util.phase.PhaseUtils;
 
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -42,7 +42,7 @@ public class ConsumerApp {
 
     private void setupLog4j2() throws AppFatalException {
         String phase = PhaseUtils.build().getPhase();
-        String log4j2ConfigFile = String.format("%s/tm.raftel.util.aws_kinesis-log4j.xml", phase);
+        String log4j2ConfigFile = String.format("%s/k0.util.aws_kinesis-log4j.xml", phase);
         String exceptionMessage = String.format("Cannot load log4j config file: %s", log4j2ConfigFile);
         try {
             URL log4j2ConfigFileUrl = ConsumerApp.class.getClassLoader().getResource(log4j2ConfigFile);

@@ -1,4 +1,4 @@
-package tm.raftel.util.json;
+package k0.util.json;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

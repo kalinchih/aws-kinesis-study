@@ -1,4 +1,4 @@
-package tm.raftel.util.aws_kinesis;
+package k0.util.aws_kinesis;
 
 import com.amazonaws.services.kinesis.model.Record;
 

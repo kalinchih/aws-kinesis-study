@@ -1,7 +1,7 @@
-package tm.raftel.util.config;
+package k0.util.config;
 
+import k0.util.phase.PhaseUtils;
 import org.apache.commons.lang3.StringUtils;
-import tm.raftel.util.phase.PhaseUtils;
 
 import java.io.IOException;
 import java.io.InputStream;

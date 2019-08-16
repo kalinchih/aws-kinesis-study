@@ -1,7 +1,7 @@
 # aws-kinesis-study
 
 This application help you to quickly enable an AWS Kinesis stream consumer.
-It leverage AWS KCL (Kinesis Client Library) 1.x V1 interface and encapsulated in package `tm.raftel.util.aws_kinesis`.
+It leverage AWS KCL (Kinesis Client Library) 1.x V1 interface and encapsulated in package `k0.util.aws_kinesis`.
 
 KCL helps consumer to automatically record (aka, checkpoint) the `sequence number` of the last consumed stream record. The `sequence number` is saved in a DynamoDB table which automatically created by KCL. The table name is the consumerName which configured in `KinesisConsumerConfig`.
 
@@ -21,7 +21,7 @@ KCL helps consumer to automatically record (aka, checkpoint) the `sequence numbe
   - Run the function main() by argument, dev
 
 
-### Key Classes in Pacage tm.raftel.util.aws_kinesis 
+### Key Classes in Pacage k0.util.aws_kinesis 
 - Class KinesisConsumerConfig
   - The config class 
 - Class KinesisConsumer
@@ -86,18 +86,18 @@ Here is the KinesisConsumerConfig settings with default value.
 
 ## Logging
 
-`tm.raftel.util.aws_kinesis` leverages log4j (v1) to output JSON format info, error, system logs.
+`k0.util.aws_kinesis` leverages log4j (v1) to output JSON format info, error, system logs.
 - Logs:
   - info logs: 
-    - logs which are logged by `tm.raftel.util.aws_kinesis`
+    - logs which are logged by `k0.util.aws_kinesis`
     - only contain info level logs
   - error logs: 
-    - logs which are logged by `tm.raftel.util.aws_kinesis`
+    - logs which are logged by `k0.util.aws_kinesis`
     - contain warn, error and fatal logs
   - system logs:
     - logs which are logged by 3rd party libraries such as KCL
   
-The logging configuration file is in `/resources/{phase}/tm.raftel.util.aws_kinesis-log4j.xml`.
+The logging configuration file is in `/resources/{phase}/k0.util.aws_kinesis-log4j.xml`.
 You can toggle this library to write info log by KinesisConsumerConfig.setEnableInfoLog()
 
 
