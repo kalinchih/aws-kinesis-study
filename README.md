@@ -117,13 +117,6 @@ You can toggle this library to write info log by KinesisConsumerConfig.setEnable
         <version>1.11.1</version>
     </dependency>
 
-    <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
-    <dependency>
-        <groupId>org.apache.commons</groupId>
-        <artifactId>commons-lang3</artifactId>
-        <version>3.8.1</version>
-    </dependency>
-
     <!-- https://mvnrepository.com/artifact/log4j/log4j -->
     <dependency>
         <groupId>log4j</groupId>
