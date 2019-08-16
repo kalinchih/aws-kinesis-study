@@ -5,10 +5,12 @@ import com.amazonaws.services.kinesis.clientlibrary.interfaces.IRecordProcessorF
 
 public class KinesisRecordProcessorFactory implements IRecordProcessorFactory {
 
-    private KinesisConsumerBag bag;
+    private KinesisConsumerConfig bag;
+    private KinesisConsumerHandler recordHandler;
 
-    KinesisRecordProcessorFactory(KinesisConsumerBag bag) {
+    KinesisRecordProcessorFactory(KinesisConsumerConfig bag, KinesisConsumerHandler recordHandler) {
         this.bag = bag;
+        this.recordHandler = recordHandler;
     }
 
     /**
@@ -16,6 +18,6 @@ public class KinesisRecordProcessorFactory implements IRecordProcessorFactory {
      */
     @Override
     public IRecordProcessor createProcessor() {
-        return new KinesisRecordProcessor(bag);
+        return new KinesisRecordProcessor(bag, recordHandler);
     }
 }

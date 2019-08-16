@@ -6,7 +6,7 @@ import com.amazonaws.services.kinesis.clientlibrary.lib.worker.InitialPositionIn
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 
-public class KinesisConsumerBag {
+public class KinesisConsumerConfig {
 
     private AWSCredentialsProvider awsCredentialsProvider;
     private String awsRegion;
@@ -16,13 +16,15 @@ public class KinesisConsumerBag {
     private int initialLeaseTableReadCapacity = 1;
     private int initialLeaseTableWriteCapacity = 1;
     private int maxPollRecordCount = 100;
-    private long processRetryDelayMillis = 60000;
+    private long consumerRestartDelayMillis = 60000;
     private int checkpointMaxRetryCount = 10;
     private long checkpointRetryDelayMillis = 30000;
     private CharsetDecoder recordDataDecoder = Charset.forName("UTF8").newDecoder();
+    private boolean enableInfoLog = false;
     private KinesisConsumer kinesisConsumer;
 
-    public KinesisConsumerBag(AWSCredentialsProvider awsCredentialsProvider, String awsRegion, String streamName, String consumerName) {
+    public KinesisConsumerConfig(AWSCredentialsProvider awsCredentialsProvider, String awsRegion, String streamName,
+            String consumerName) {
         this.awsCredentialsProvider = awsCredentialsProvider;
         this.awsRegion = awsRegion;
         this.streamName = streamName;
@@ -97,12 +99,12 @@ public class KinesisConsumerBag {
      *
      * @return
      */
-    public long getProcessRetryDelayMillis() {
-        return processRetryDelayMillis;
+    public long getConsumerRestartDelayMillis() {
+        return consumerRestartDelayMillis;
     }
 
-    public void setProcessRetryDelayMillis(long processRetryDelayMillis) {
-        this.processRetryDelayMillis = processRetryDelayMillis;
+    public void setConsumerRestartDelayMillis(long consumerRestartDelayMillis) {
+        this.consumerRestartDelayMillis = consumerRestartDelayMillis;
     }
 
     /**
@@ -155,5 +157,18 @@ public class KinesisConsumerBag {
 
     public void setInitialPositionInStream(InitialPositionInStream initialPositionInStream) {
         this.initialPositionInStream = initialPositionInStream;
+    }
+
+    /**
+     * Default value: false
+     *
+     * @return
+     */
+    public boolean isEnableInfoLog() {
+        return enableInfoLog;
+    }
+
+    public void setEnableInfoLog(boolean enableInfoLog) {
+        this.enableInfoLog = enableInfoLog;
     }
 }

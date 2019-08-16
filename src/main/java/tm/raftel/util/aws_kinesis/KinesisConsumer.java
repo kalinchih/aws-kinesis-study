@@ -7,7 +7,6 @@ import com.amazonaws.services.kinesis.clientlibrary.lib.worker.Worker;
 import com.amazonaws.services.kinesis.metrics.impl.NullMetricsFactory;
 import com.amazonaws.services.kinesis.metrics.interfaces.IMetricsFactory;
 import tm.raftel.util.date.DateUtils;
-import tm.raftel.util.log.LogUtils;
 import tm.raftel.util.random.RandomUtils;
 
 import java.net.InetAddress;
@@ -15,12 +14,15 @@ import java.time.Instant;
 
 public final class KinesisConsumer {
 
-    private final LogUtils logUtils = LogUtils.build();
-    private KinesisConsumerBag bag;
+    private KinesisConsumerConfig bag;
+    private KinesisConsumerHandler recordHandler;
+    private KinesisLogger logger;
     private KinesisConsumerWorkerWithId workerWithId;
 
-    public KinesisConsumer(KinesisConsumerBag bag) {
-        this.bag = bag;
+    public KinesisConsumer(KinesisConsumerConfig config, KinesisConsumerHandler recordHandler) {
+        this.bag = config;
+        this.recordHandler = recordHandler;
+        this.logger = KinesisLogger.build(config.isEnableInfoLog());
     }
 
     Worker getWorker() {
@@ -46,15 +48,16 @@ public final class KinesisConsumer {
             ip = "";
         }
         Instant instant = Instant.now();
-        String workerId = String.format("ConsumerWorker@%s-Since%s#%s", ip, DateUtils.getEpochMs(), RandomUtils.getRandom(100));
-        KinesisClientLibConfiguration kclConfiguration =
-                new KinesisClientLibConfiguration(bag.getConsumerName(), bag.getStreamName(), bag.getAwsCredentialsProvider(), workerId);
+        String workerId = String.format("ConsumerWorker@%s-Since%s#%s", ip, DateUtils.getEpochMs(),
+                RandomUtils.getRandom(100));
+        KinesisClientLibConfiguration kclConfiguration = new KinesisClientLibConfiguration(bag.getConsumerName(),
+                bag.getStreamName(), bag.getAwsCredentialsProvider(), workerId);
         kclConfiguration.withRegionName(bag.getAwsRegion());
         kclConfiguration.withInitialPositionInStream(bag.getInitialPositionInStream());
         kclConfiguration.withMaxRecords(bag.getMaxPollRecordCount());
         kclConfiguration.withInitialLeaseTableReadCapacity(bag.getInitialLeaseTableReadCapacity());
         kclConfiguration.withInitialLeaseTableWriteCapacity(bag.getInitialLeaseTableWriteCapacity());
-        IRecordProcessorFactory recordProcessorFactory = new KinesisRecordProcessorFactory(bag);
+        IRecordProcessorFactory recordProcessorFactory = new KinesisRecordProcessorFactory(bag, recordHandler);
         IMetricsFactory metricsFactory = new NullMetricsFactory();
         Worker worker =
                 new Worker.Builder().recordProcessorFactory(recordProcessorFactory).config(kclConfiguration).metricsFactory(metricsFactory).build();
@@ -64,14 +67,14 @@ public final class KinesisConsumer {
     void restart(String shardId, ShutdownReason reason) {
         KinesisConsumerWorkerWithId oldKinesisConsumerWorkerWithId = this.workerWithId;
         // log
-        KinesisConsumerLog kinesisConsumerLog = new KinesisConsumerLog(bag, shardId);
+        KinesisLog kinesisLog = new KinesisLog(bag, shardId);
         KinesisConsumerRestartException restartConsumerExpception =
-                new KinesisConsumerRestartException(oldKinesisConsumerWorkerWithId.getWorkerId(), bag.getProcessRetryDelayMillis(), reason,
-                        kinesisConsumerLog);
-        logUtils.warn(restartConsumerExpception);
-        // TODO: alert
+                new KinesisConsumerRestartException(oldKinesisConsumerWorkerWithId.getWorkerId(),
+                        bag.getConsumerRestartDelayMillis(), reason, kinesisLog);
+        logger.warn(restartConsumerExpception);
+        recordHandler.alertConsumerRestart();
         try {
-            Thread.sleep(bag.getProcessRetryDelayMillis());
+            Thread.sleep(bag.getConsumerRestartDelayMillis());
         } catch (InterruptedException interruptedException) {
             // ignore
         }

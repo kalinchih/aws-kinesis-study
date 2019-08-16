@@ -6,9 +6,9 @@ public class KinesisConsumerRestartException extends Exception {
 
     private static final long serialVersionUID = 1L;
 
-    public KinesisConsumerRestartException(String shutdownWorkerId, long processRetryDelayMillis, ShutdownReason reason,
-            KinesisConsumerLog kinesisConsumerLog) {
-        super(String.format("Restart %s after %s ms. ShutdownWorkerId=%s. ShutdownReason=%s. KinesisConsumerLog=%s.", KinesisConsumer.class.getName(),
-                shutdownWorkerId, processRetryDelayMillis, reason.name(), kinesisConsumerLog));
+    public KinesisConsumerRestartException(String shutdownWorkerId, long processRetryDelayMillis,
+            ShutdownReason reason, KinesisLog kinesisLog) {
+        super(String.format("Restart %s after %s ms. ShutdownWorkerId=%s. ShutdownReason=%s. KinesisConsumerLog=%s.",
+                KinesisConsumer.class.getName(), shutdownWorkerId, processRetryDelayMillis, reason.name(), kinesisLog));
     }
 }

@@ -6,18 +6,20 @@ import com.amazonaws.services.kinesis.clientlibrary.interfaces.IRecordProcessorC
 import com.amazonaws.services.kinesis.clientlibrary.lib.worker.ShutdownReason;
 import com.amazonaws.services.kinesis.model.Record;
 import org.apache.commons.lang3.StringUtils;
-import tm.raftel.util.log.LogUtils;
 
 import java.util.List;
 
 public class KinesisRecordProcessor implements IRecordProcessor {
 
-    private final LogUtils logUtils = LogUtils.build();
-    private KinesisConsumerBag bag;
+    private KinesisConsumerConfig config;
+    private KinesisConsumerHandler recordHandler;
+    private KinesisLogger logger;
     private String shardId;
 
-    KinesisRecordProcessor(KinesisConsumerBag bag) {
-        this.bag = bag;
+    KinesisRecordProcessor(KinesisConsumerConfig config, KinesisConsumerHandler recordHandler) {
+        this.config = config;
+        this.recordHandler = recordHandler;
+        this.logger = KinesisLogger.build(config.isEnableInfoLog());
     }
 
     /**
@@ -26,7 +28,8 @@ public class KinesisRecordProcessor implements IRecordProcessor {
     @Override
     public void initialize(String shardId) {
         this.shardId = shardId;
-        logUtils.info(String.format("Initialized %s. KinesisConsumerLog=%s.", this.toString(), new KinesisConsumerLog(bag, shardId)));
+        logger.info(String.format("Initialized %s. KinesisConsumerLog=%s.", this.toString(), new KinesisLog(config,
+                shardId)));
     }
 
     /**
@@ -34,9 +37,9 @@ public class KinesisRecordProcessor implements IRecordProcessor {
      */
     @Override
     public void processRecords(List<Record> records, IRecordProcessorCheckpointer checkpointer) {
-        String consumerWorkerId = bag.getKinesisConsumer().getWorkerId();
-        logUtils.info(String.format("Start to process %s records. KinesisConsumerLog=%s.", records.size(),
-                new KinesisConsumerLog(bag, shardId, consumerWorkerId)));
+        String consumerWorkerId = config.getKinesisConsumer().getWorkerId();
+        logger.info(String.format("Start to process %s records. KinesisConsumerLog=%s.", records.size(),
+                new KinesisLog(config, shardId, consumerWorkerId)));
         String ongoingSequenceNumber = null;
         String completedSequenceNumber = null;
         try {
@@ -49,8 +52,9 @@ public class KinesisRecordProcessor implements IRecordProcessor {
             checkpoint(checkpointer, completedSequenceNumber);
         } catch (Exception e) {
             KinesisProcessRecordException processRecordException =
-                    new KinesisProcessRecordException(new KinesisConsumerLog(bag, shardId, consumerWorkerId, ongoingSequenceNumber), e);
-            logUtils.error(processRecordException);
+                    new KinesisProcessRecordException(new KinesisLog(config, shardId, consumerWorkerId,
+                            ongoingSequenceNumber), e);
+            logger.error(processRecordException);
             if (completedSequenceNumber != null) {
                 checkpoint(checkpointer, completedSequenceNumber);
             }
@@ -59,22 +63,18 @@ public class KinesisRecordProcessor implements IRecordProcessor {
     }
 
     private void processSingleRecord(Record record, int indexInRecords) throws Exception {
-        String recordData = bag.getRecordDataDecoder().decode(record.getData()).toString();
-        logUtils.info(String.format("Start to process record. KinesisConsumerLog=%s.",
-                new KinesisConsumerLog(bag, shardId, bag.getKinesisConsumer().getWorkerId(), record.getSequenceNumber())));
-        // TODO: biz logic here
-        //
-        if (indexInRecords >= 0) {
-            throw new Exception("GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG");
-        }
+        logger.info(String.format("Pass record to (%s)%s. KinesisConsumerLog=%s.",
+                KinesisConsumerHandler.class.getSimpleName(), recordHandler.toString(), new KinesisLog(config,
+                        shardId, config.getKinesisConsumer().getWorkerId(), record.getSequenceNumber())));
+        recordHandler.handleRecord(record);
     }
 
     private void checkpoint(IRecordProcessorCheckpointer checkpointer, String sequenceNumber) {
-        String consumerWorkerId = bag.getKinesisConsumer().getWorkerId();
-        for (int i = 0; i < bag.getCheckpointMaxRetryCount(); i++) {
+        String consumerWorkerId = config.getKinesisConsumer().getWorkerId();
+        for (int i = 0; i < config.getCheckpointMaxRetryCount(); i++) {
             try {
-                logUtils.info(String.format("Start to cehckpoint. KinesisConsumerLog=%s.",
-                        new KinesisConsumerLog(bag, shardId, bag.getKinesisConsumer().getWorkerId(), sequenceNumber)));
+                logger.info(String.format("Start to cehckpoint. KinesisConsumerLog=%s.", new KinesisLog(config,
+                        shardId, config.getKinesisConsumer().getWorkerId(), sequenceNumber)));
                 if (StringUtils.isNotBlank(sequenceNumber)) {
                     checkpointer.checkpoint(sequenceNumber);
                 } else {
@@ -85,23 +85,25 @@ public class KinesisRecordProcessor implements IRecordProcessor {
                 // Ignore checkpoint if the processor instance has been shutdown (fail over).
                 break;
             } catch (Exception e) {
-                if (i >= (bag.getCheckpointMaxRetryCount() - 1)) {
-                    String message = String.format("Upon getCheckpointMaxRetryCount after %s attempts.", bag.getCheckpointMaxRetryCount());
+                if (i >= (config.getCheckpointMaxRetryCount() - 1)) {
+                    String message = String.format("Upon getCheckpointMaxRetryCount after %s attempts.",
+                            config.getCheckpointMaxRetryCount());
                     KinesisConsumerCheckpointException checkpointException =
-                            new KinesisConsumerCheckpointException(message, new KinesisConsumerLog(bag, shardId, consumerWorkerId, sequenceNumber),
-                                    e);
-                    logUtils.error(checkpointException);
+                            new KinesisConsumerCheckpointException(message, new KinesisLog(config, shardId,
+                                    consumerWorkerId, sequenceNumber), e);
+                    logger.error(checkpointException);
                     break;
                 } else {
-                    String message = String.format("Retry checkpoint in attempts: %/%s.", (i + 1), bag.getCheckpointMaxRetryCount());
+                    String message = String.format("Retry checkpoint in attempts: %/%s.", (i + 1),
+                            config.getCheckpointMaxRetryCount());
                     KinesisConsumerCheckpointException checkpointException =
-                            new KinesisConsumerCheckpointException(message, new KinesisConsumerLog(bag, shardId, consumerWorkerId, sequenceNumber),
-                                    e);
-                    logUtils.warn(checkpointException);
+                            new KinesisConsumerCheckpointException(message, new KinesisLog(config, shardId,
+                                    consumerWorkerId, sequenceNumber), e);
+                    logger.warn(checkpointException);
                 }
             }
             try {
-                Thread.sleep(bag.getCheckpointRetryDelayMillis());
+                Thread.sleep(config.getCheckpointRetryDelayMillis());
             } catch (InterruptedException interruptedException) {
                 // ignore
             }
@@ -114,6 +116,6 @@ public class KinesisRecordProcessor implements IRecordProcessor {
     @Override
     public void shutdown(IRecordProcessorCheckpointer checkpointer, ShutdownReason reason) {
         // Not to checkpoint! processSingleRecord() should have the ability to handle re-poll/non-checkpoint records.
-        bag.getKinesisConsumer().restart(shardId, reason);
+        config.getKinesisConsumer().restart(shardId, reason);
     }
 }

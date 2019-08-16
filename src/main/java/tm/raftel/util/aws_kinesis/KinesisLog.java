@@ -1,14 +1,14 @@
 package tm.raftel.util.aws_kinesis;
 
-public class KinesisConsumerLog {
+public class KinesisLog {
 
     public String streamName;
     public String consumerName;
     public String[] others;
 
-    public KinesisConsumerLog(KinesisConsumerBag kinesisConsumerBag, String... others) {
-        this.streamName = kinesisConsumerBag.getStreamName();
-        this.consumerName = kinesisConsumerBag.getConsumerName();
+    public KinesisLog(KinesisConsumerConfig kinesisConsumerConfig, String... others) {
+        this.streamName = kinesisConsumerConfig.getStreamName();
+        this.consumerName = kinesisConsumerConfig.getConsumerName();
         this.others = others;
     }
 

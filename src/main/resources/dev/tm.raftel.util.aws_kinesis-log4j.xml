@@ -1,11 +1,11 @@
 <!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
 <log4j:configuration xmlns:log4j='http://jakarta.apache.org/log4j/'>
 
-    <appender name="FileInfo" class="org.apache.log4j.RollingFileAppender">
+    <appender name="InfoLogFile" class="org.apache.log4j.RollingFileAppender">
         <param name="append" value="true"/>
         <param name="maxFileSize" value="10MB"/>
         <param name="maxBackupIndex" value="50"/>
-        <param name="file" value="logs/dev-info.log"/>
+        <param name="file" value="logs/dev-tm.raftel.util.aws_kinesis-info.log"/>
         <layout class="org.apache.log4j.PatternLayout">
             <param name="ConversionPattern" value="%m%n"/>
         </layout>
@@ -15,11 +15,11 @@
             <param name="AcceptOnMatch" value="true"/>
         </filter>
     </appender>
-    <appender name="FileError" class="org.apache.log4j.RollingFileAppender">
+    <appender name="ErrorLogFile" class="org.apache.log4j.RollingFileAppender">
         <param name="append" value="true"/>
         <param name="maxFileSize" value="10MB"/>
         <param name="maxBackupIndex" value="50"/>
-        <param name="file" value="logs/dev-error.log"/>
+        <param name="file" value="logs/dev-tm.raftel.util.aws_kinesis-error.log"/>
         <layout class="org.apache.log4j.PatternLayout">
             <param name="ConversionPattern" value="%m%n"/>
         </layout>
@@ -29,11 +29,11 @@
             <param name="AcceptOnMatch" value="true"/>
         </filter>
     </appender>
-    <appender name="FileSystem" class="org.apache.log4j.RollingFileAppender">
+    <appender name="SystemLogFile" class="org.apache.log4j.RollingFileAppender">
         <param name="append" value="true"/>
         <param name="maxFileSize" value="10MB"/>
         <param name="maxBackupIndex" value="50"/>
-        <param name="file" value="logs/dev-system.log"/>
+        <param name="file" value="logs/dev-tm.raftel.util.aws_kinesis-system.log"/>
         <layout class="org.apache.log4j.PatternLayout">
             <param name="ConversionPattern" value="%-5p- %d{yyyy-MM-dd HH:mm:ss} - [%t] %c{2\} - %m%n"/>
         </layout>
@@ -55,17 +55,17 @@
     </appender>
 
 
-    <logger name="info_logger" additivity="false">
+    <logger name="tm.raftel.util.aws_kinesis.InfoLogger" additivity="false">
         <level value="info"/>
-        <appender-ref ref="FileInfo"/>
+        <appender-ref ref="InfoLogFile"/>
     </logger>
-    <logger name="error_logger" additivity="false">
+    <logger name="tm.raftel.util.aws_kinesis.ErrorLogger" additivity="false">
         <level value="warn"/>
-        <appender-ref ref="FileError"/>
+        <appender-ref ref="ErrorLogFile"/>
     </logger>
     <root>
         <level value="info"/>
-        <appender-ref ref="FileSystem"/>
+        <appender-ref ref="SystemLogFile"/>
         <appender-ref ref="Console"/>
     </root>
 
