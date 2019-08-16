@@ -1,6 +1,6 @@
 package tm.raftel.util.log;
 
-import org.apache.logging.log4j.LogManager;
+import org.apache.log4j.Logger;
 import tm.raftel.util.date.DateUtils;
 import tm.raftel.util.exception.ExceptionUtils;
 import tm.raftel.util.json.JsonUtils;
@@ -11,8 +11,8 @@ import java.util.Map;
 public class LogUtils {
 
     private static LogUtils instance = new LogUtils();
-    private org.apache.logging.log4j.Logger infoLogger = LogManager.getLogger("info_logger");
-    private org.apache.logging.log4j.Logger errorLogger = LogManager.getLogger("error_logger");
+    private Logger infoLogger = Logger.getLogger("info_logger");
+    private Logger errorLogger = Logger.getLogger("error_logger");
 
     private LogUtils() {
     }
