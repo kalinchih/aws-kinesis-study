@@ -1,7 +1,7 @@
 # aws-kinesis-study
 
 This application help you to quickly enable an AWS Kinesis stream consumer.
-It leverage AWS KCL (Kinesis Client Library) 1.x V1 interface and encapsulated in package `k0.util.aws_kinesis`.
+It leverage AWS KCL (Kinesis Client Library) 1.x version 1 interface and encapsulated in package `k0.util.aws_kinesis`.
 
 KCL helps consumer to automatically record (aka, checkpoint) the `sequence number` of the last consumed stream record. The `sequence number` is saved in a DynamoDB table which automatically created by KCL. The table name is the consumerName which configured in `KinesisConsumerConfig`.
 
@@ -37,9 +37,9 @@ KCL helps consumer to automatically record (aka, checkpoint) the `sequence numbe
   - @Override methods:
     - handleRecord(Record record):
       - Do your biz logic here!
-      - If exception thrown in this method, the input record will not be checked point trigger a restart flow
+      - If exception thrown in this method, the input record will not be checked point and trigger a restart KinesisConsumer flow
     - alertConsumerRestart():
-      - Customize alarm for KinesisConsumer restart event
+      - Put your alarm for KinesisConsumer restart event
 
 
 ```
@@ -129,9 +129,11 @@ You can toggle this library to write info log by KinesisConsumerConfig.setEnable
 ---
 
 ## Recommendations
-- You should set the `initialPositionInStream` to `TRIM_HORIZON` in `KinesisConsumerConfig` for consumer startup, shutdown and Throttling. The `TRIM_HORIZON` is for the 1st time when KCL DynamoDB table. Then, KCL based on the latest consumed `sequence number` from the DynamoDB table to consume stream records.
+- You should set the `initialPositionInStream` to `TRIM_HORIZON` in `KinesisConsumerConfig` for consumer startup, shutdown and throttling. The 
+`TRIM_HORIZON` is for the KCL 1st-time consume stream. Then, KCL based on the latest consumed `sequence number` from the DynamoDB table to 
+consume stream records.
 - Your concrete KinesisConsumerHandler must have the ability to handle duplicate records.
-- Create another IAM
+- Create another IAM for this application
 
 ---
 
@@ -141,13 +143,19 @@ KCL needs these AWS resource permissions.
 - Kinesis:
   - ListShards
   - AmazonKinesisReadOnlyAccess
+  - GetRecords
+  - GetShardIterator
 - DynamoDB:
   - CreateTable
   - DescribeTable
+  - Scan
   - GetItem
   - PutItem
+  - UpdateItem
+  - DeleteItem
 - CloudWatch:
   - PutMetricAlarm
+  - PutMetricData
 
 ---
 
