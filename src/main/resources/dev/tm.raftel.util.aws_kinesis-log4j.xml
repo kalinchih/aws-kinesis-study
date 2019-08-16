@@ -45,7 +45,7 @@
     </appender>
     <appender name="Console" class="org.apache.log4j.ConsoleAppender">
         <layout class="org.apache.log4j.PatternLayout">
-            <param name="ConversionPattern" value="%m%n"/>
+            <param name="ConversionPattern" value="%-5p- %d{yyyy-MM-dd HH:mm:ss} - [%t] %c{2\} - %m%n"/>
         </layout>
         <filter class="org.apache.log4j.varia.LevelRangeFilter">
             <param name="levelMin" value="debug"/>

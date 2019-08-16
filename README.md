@@ -14,9 +14,11 @@ KCL helps consumer to automatically record (aka, checkpoint) the `sequence numbe
 - Class RecordObject
   - Stream record wrapper 
 - Class ProducerApp
-  - Produce stream records 
+  - Produce stream records
+  - Run the function main() by argument, dev 
 - Class ConsumerApp:
   - Consume stream records
+  - Run the function main() by argument, dev
 
 
 ### Key Classes in Pacage tm.raftel.util.aws_kinesis 
