@@ -127,7 +127,7 @@ You can toggle this library to write info log by KinesisConsumerConfig.setEnable
 - You should set the `initialPositionInStream` to `TRIM_HORIZON` in `KinesisConsumerConfig` for consumer startup, shutdown and throttling. The 
 `TRIM_HORIZON` is for the KCL 1st-time consume stream. Then, KCL based on the latest consumed `sequence number` from the DynamoDB table to 
 consume stream records.
-- Your concrete KinesisConsumerHandler must have the ability to handle duplicate records.
+- Your concrete KinesisConsumerHelper must have the ability to handle duplicate records.
 - Create another IAM for this application
 
 ---
