@@ -15,13 +15,13 @@ import java.time.Instant;
 public final class KinesisConsumer {
 
     private KinesisConsumerConfig bag;
-    private KinesisConsumerHelper recordHandler;
+    private KinesisConsumerHelper consumerHelper;
     private KinesisLogger logger;
     private KinesisConsumerWorkerWithId workerWithId;
 
-    public KinesisConsumer(KinesisConsumerConfig config, KinesisConsumerHelper recordHandler) {
+    public KinesisConsumer(KinesisConsumerConfig config, KinesisConsumerHelper consumerHelper) {
         this.bag = config;
-        this.recordHandler = recordHandler;
+        this.consumerHelper = consumerHelper;
         this.logger = KinesisLogger.build(config.isEnableInfoLog());
     }
 
@@ -57,7 +57,7 @@ public final class KinesisConsumer {
         kclConfiguration.withMaxRecords(bag.getMaxPollRecordCount());
         kclConfiguration.withInitialLeaseTableReadCapacity(bag.getInitialLeaseTableReadCapacity());
         kclConfiguration.withInitialLeaseTableWriteCapacity(bag.getInitialLeaseTableWriteCapacity());
-        IRecordProcessorFactory recordProcessorFactory = new KinesisRecordProcessorFactory(bag, recordHandler);
+        IRecordProcessorFactory recordProcessorFactory = new KinesisRecordProcessorFactory(bag, consumerHelper);
         IMetricsFactory metricsFactory = new NullMetricsFactory();
         Worker worker =
                 new Worker.Builder().recordProcessorFactory(recordProcessorFactory).config(kclConfiguration).metricsFactory(metricsFactory).build();
@@ -72,7 +72,7 @@ public final class KinesisConsumer {
                 new KinesisConsumerRestartException(oldKinesisConsumerWorkerWithId.getWorkerId(),
                         bag.getConsumerRestartDelayMillis(), reason, kinesisLog);
         logger.warn(restartConsumerExpception);
-        recordHandler.alertConsumerRestart();
+        consumerHelper.alertConsumerRestart();
         try {
             Thread.sleep(bag.getConsumerRestartDelayMillis());
         } catch (InterruptedException interruptedException) {
