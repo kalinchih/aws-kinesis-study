@@ -15,11 +15,11 @@ import java.time.Instant;
 public final class KinesisConsumer {
 
     private KinesisConsumerConfig bag;
-    private KinesisConsumerHandler recordHandler;
+    private KinesisConsumerHelper recordHandler;
     private KinesisLogger logger;
     private KinesisConsumerWorkerWithId workerWithId;
 
-    public KinesisConsumer(KinesisConsumerConfig config, KinesisConsumerHandler recordHandler) {
+    public KinesisConsumer(KinesisConsumerConfig config, KinesisConsumerHelper recordHandler) {
         this.bag = config;
         this.recordHandler = recordHandler;
         this.logger = KinesisLogger.build(config.isEnableInfoLog());
@@ -33,7 +33,7 @@ public final class KinesisConsumer {
         return workerWithId.getWorkerId();
     }
 
-    public void start() {
+    public void subscribeStream() {
         this.workerWithId = createWorker();
         // Before worker run(), put self in bag to for restart()
         this.bag.setKinesisConsumer(this);
@@ -79,7 +79,7 @@ public final class KinesisConsumer {
             // ignore
         }
         oldKinesisConsumerWorkerWithId.getWorker().shutdown();
-        start();
+        subscribeStream();
     }
 }
 

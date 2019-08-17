@@ -1,5 +1,5 @@
 import com.amazonaws.services.kinesis.model.Record;
-import k0.util.aws_kinesis.KinesisConsumerHandler;
+import k0.util.aws_kinesis.KinesisConsumerHelper;
 import k0.util.config.ConfigUtils;
 import k0.util.log.LogUtils;
 
@@ -7,12 +7,12 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.util.Properties;
 
-public class ConsumerHandler implements KinesisConsumerHandler {
+public class ConsumerHelper implements KinesisConsumerHelper {
 
     private CharsetDecoder recordDataDecoderCharset;
     private LogUtils logUtils = LogUtils.build();
 
-    public ConsumerHandler() throws Exception {
+    public ConsumerHelper() throws Exception {
         ConfigUtils configUtils = ConfigUtils.build();
         Properties config = configUtils.getProperties(String.format("config.properties"));
         recordDataDecoderCharset = Charset.forName(configUtils.getProperty(config, "recordDataDecoder")).newDecoder();

@@ -12,11 +12,11 @@ import java.util.List;
 public class KinesisRecordProcessor implements IRecordProcessor {
 
     private KinesisConsumerConfig config;
-    private KinesisConsumerHandler recordHandler;
+    private KinesisConsumerHelper recordHandler;
     private KinesisLogger logger;
     private String shardId;
 
-    KinesisRecordProcessor(KinesisConsumerConfig config, KinesisConsumerHandler recordHandler) {
+    KinesisRecordProcessor(KinesisConsumerConfig config, KinesisConsumerHelper recordHandler) {
         this.config = config;
         this.recordHandler = recordHandler;
         this.logger = KinesisLogger.build(config.isEnableInfoLog());
@@ -64,7 +64,7 @@ public class KinesisRecordProcessor implements IRecordProcessor {
 
     private void processSingleRecord(Record record, int indexInRecords) throws Exception {
         logger.info(String.format("Pass record to (%s)%s. KinesisConsumerLog=%s.",
-                KinesisConsumerHandler.class.getSimpleName(), recordHandler.toString(), new KinesisLog(config,
+                KinesisConsumerHelper.class.getSimpleName(), recordHandler.toString(), new KinesisLog(config,
                         shardId, config.getKinesisConsumer().getWorkerId(), record.getSequenceNumber())));
         recordHandler.handleRecord(record);
     }

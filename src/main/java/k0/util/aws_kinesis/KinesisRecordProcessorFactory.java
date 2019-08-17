@@ -6,9 +6,9 @@ import com.amazonaws.services.kinesis.clientlibrary.interfaces.IRecordProcessorF
 public class KinesisRecordProcessorFactory implements IRecordProcessorFactory {
 
     private KinesisConsumerConfig bag;
-    private KinesisConsumerHandler recordHandler;
+    private KinesisConsumerHelper recordHandler;
 
-    KinesisRecordProcessorFactory(KinesisConsumerConfig bag, KinesisConsumerHandler recordHandler) {
+    KinesisRecordProcessorFactory(KinesisConsumerConfig bag, KinesisConsumerHelper recordHandler) {
         this.bag = bag;
         this.recordHandler = recordHandler;
     }

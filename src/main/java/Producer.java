@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-public class ProducerApp {
+public class Producer {
 
     private String phase;
     private String accessKeyId;
@@ -26,12 +26,12 @@ public class ProducerApp {
 
     public static void main(String[] args) {
         try {
-            ProducerApp producerApp = new ProducerApp();
-            producerApp.setupPhase(args);
-            producerApp.loadConfig();
+            Producer producer = new Producer();
+            producer.setupPhase(args);
+            producer.loadConfig();
             int putRequestCount = 10;
             int recordsInOnePutRequest = 1;
-            producerApp.produce(putRequestCount, recordsInOnePutRequest, 1000);
+            producer.produce(putRequestCount, recordsInOnePutRequest, 1000);
         } catch (Exception e) {
             System.err.println("Caught throwable while processing data.");
             e.printStackTrace();
@@ -51,8 +51,8 @@ public class ProducerApp {
     private void loadConfig() throws Exception {
         ConfigUtils configUtils = ConfigUtils.build();
         Properties config = configUtils.getProperties("config.properties");
-        accessKeyId = configUtils.getProperty(config, "accessKeyId");
-        accessSecretKey = configUtils.getProperty(config, "accessSecretKey");
+        accessKeyId = configUtils.getProperty(config, "streamAccessKeyId");
+        accessSecretKey = configUtils.getProperty(config, "streamAccessSecretKey");
         region = configUtils.getProperty(config, "streamRegion");
         kinesisStreamName = configUtils.getProperty(config, "streamName");
     }

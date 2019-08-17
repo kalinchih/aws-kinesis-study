@@ -13,10 +13,10 @@ KCL helps consumer to automatically record (aka, checkpoint) the `sequence numbe
 ### Demo Classes
 - Class RecordObject
   - Stream record wrapper 
-- Class ProducerApp
+- Class Producer
   - Produce stream records
   - Run the function main() by argument, dev 
-- Class ConsumerApp:
+- Class Consumer
   - Consume stream records
   - Run the function main() by argument, dev
 
@@ -30,9 +30,9 @@ KCL helps consumer to automatically record (aka, checkpoint) the `sequence numbe
       - Fail to checkpoint consumer sequence number
     - Restart consumer timings:
       - Fail to consume records
-      - When exception thrown in customized KinesisConsumerHandler.handleRecord() 
+      - When exception thrown in concrete KinesisConsumerHelper.handleRecord() 
   - If start multiple KinesisConsumer instances, these consumers are managed by KCL and play as load balancing mode
-- Interface KinesisConsumerHandler
+- Interface KinesisConsumerHelper
   - Interface to customized consumer
   - @Override methods:
     - handleRecord(Record record):
@@ -44,18 +44,14 @@ KCL helps consumer to automatically record (aka, checkpoint) the `sequence numbe
 
 ```
 // 1. Create KinesisConsumerConfig
-KinesisConsumerConfig consumerConfig = new KinesisConsumerConfig(awsStaticCredentialsProvider,
-        streamRegion, streamName, consumerName);
+KinesisConsumerConfig consumerConfig = createKinesisConsumerConfig();
 
-// 2. Set KinesisConsumerConfig optional settings (not necessary)
-setOptionalSettings(configUtils, configFile, consumerConfig);
+// 2. Create KinesisConsumerHelper to implement
+ConsumerHelper consumeHelper = new ConsumerHelper();
 
-// 3. Create KinesisConsumerHandler to implement
-ConsumerHandler consumeRecordHandler = new ConsumerHandler();
-
-// 4. Create/start a KinesisConsumer
-KinesisConsumer kinesisConsumer = new KinesisConsumer(consumerConfig, consumeRecordHandler);
-kinesisConsumer.start();
+// 3. Create/start a KinesisConsumer
+KinesisConsumer kinesisConsumer = new KinesisConsumer(consumerConfig, consumeHelper);
+kinesisConsumer.subscribeStream();
 ``` 
 
 ---
@@ -64,10 +60,9 @@ kinesisConsumer.start();
 
 Here is the KinesisConsumerConfig settings with default value.
 
-- AWS credential required settings
-    - accessKeyId 
-    - accessSecretKey
 - AWS Kinesis consumer required settings
+    - streamAccessKeyId 
+    - streamAccessSecretKey
     - streamRegion 
     - streamName
     - consumerName 
