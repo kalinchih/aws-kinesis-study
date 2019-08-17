@@ -1,7 +1,6 @@
 import com.amazonaws.services.kinesis.model.Record;
 import k0.util.aws_kinesis.KinesisConsumerHelper;
 import k0.util.config.ConfigUtils;
-import k0.util.log.LogUtils;
 
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
@@ -10,7 +9,6 @@ import java.util.Properties;
 public class ConsumerHelper implements KinesisConsumerHelper {
 
     private CharsetDecoder recordDataDecoderCharset;
-    private LogUtils logUtils = LogUtils.build();
 
     public ConsumerHelper() throws Exception {
         ConfigUtils configUtils = ConfigUtils.build();
@@ -26,7 +24,7 @@ public class ConsumerHelper implements KinesisConsumerHelper {
         //            throw new Exception(message);
         //        }
         String recordData = recordDataDecoderCharset.decode(record.getData()).toString();
-        logUtils.info(String.format("Processed recordData=%s, sequenceNumber=%s.", recordData,
+        System.out.println(String.format("Processed recordData=%s, sequenceNumber=%s.", recordData,
                 record.getSequenceNumber()));
     }
 
@@ -34,6 +32,6 @@ public class ConsumerHelper implements KinesisConsumerHelper {
     public void alertConsumerRestart() {
         String message = "OMG! OMG! KinesisConsumer restart!!!";
         System.err.println(message);
-        logUtils.error(new Exception(message));
+        System.err.println(new Exception(message));
     }
 }
