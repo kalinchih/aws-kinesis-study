@@ -20,7 +20,6 @@ public class KinesisConsumerConfig {
     private int checkpointMaxRetryCount = 10;
     private long checkpointRetryDelayMillis = 30000;
     private CharsetDecoder recordDataDecoder = Charset.forName("UTF8").newDecoder();
-    private boolean enableInfoLog = false;
     private KinesisConsumer kinesisConsumer;
 
     public KinesisConsumerConfig(AWSCredentialsProvider awsCredentialsProvider, String awsRegion, String streamName,
@@ -157,18 +156,5 @@ public class KinesisConsumerConfig {
 
     public void setInitialPositionInStream(InitialPositionInStream initialPositionInStream) {
         this.initialPositionInStream = initialPositionInStream;
-    }
-
-    /**
-     * Default value: false
-     *
-     * @return
-     */
-    public boolean isEnableInfoLog() {
-        return enableInfoLog;
-    }
-
-    public void setEnableInfoLog(boolean enableInfoLog) {
-        this.enableInfoLog = enableInfoLog;
     }
 }

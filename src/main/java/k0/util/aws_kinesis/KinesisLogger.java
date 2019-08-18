@@ -11,38 +11,22 @@ import java.util.Map;
 public class KinesisLogger {
 
     private static KinesisLogger instance = new KinesisLogger();
-    private boolean enableInfoLog = false;
-    private Logger infoLogger = Logger.getLogger(String.format("%s.InfoLogger",
-            KinesisLogger.class.getPackage().getName()));
-    private Logger errorLogger = Logger.getLogger(String.format("%s.ErrorLogger",
-            KinesisLogger.class.getPackage().getName()));
+    private Logger infoLogger = Logger.getLogger(String.format("%s.InfoLogger", KinesisLogger.class.getPackage().getName()));
+    private Logger errorLogger = Logger.getLogger(String.format("%s.ErrorLogger", KinesisLogger.class.getPackage().getName()));
 
     private KinesisLogger() {
     }
 
-    public static KinesisLogger build(boolean enableInfoLog) {
-        instance.enableInfoLog = enableInfoLog;
+    public static KinesisLogger build() {
         return instance;
     }
 
-    public boolean isEnableInfoLog() {
-        return enableInfoLog;
-    }
-
-    public void setEnableInfoLog(boolean enableInfoLog) {
-        this.enableInfoLog = enableInfoLog;
-    }
-
     public void debug(String message) {
-        if (enableInfoLog) {
-            infoLogger.debug(wrapLogData("debug", message, null));
-        }
+        infoLogger.debug(wrapLogData("debug", message, null));
     }
 
     public void info(String message) {
-        if (enableInfoLog) {
-            infoLogger.info(wrapLogData("info", message, null));
-        }
+        infoLogger.info(wrapLogData("info", message, null));
     }
 
     public void warn(Throwable exception) {

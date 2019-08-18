@@ -14,15 +14,15 @@ import java.time.Instant;
 
 public final class KinesisConsumer {
 
-    private KinesisConsumerConfig bag;
+    private KinesisConsumerConfig config;
     private KinesisConsumerHelper consumerHelper;
     private KinesisLogger logger;
     private KinesisConsumerWorkerWithId workerWithId;
 
     public KinesisConsumer(KinesisConsumerConfig config, KinesisConsumerHelper consumerHelper) {
-        this.bag = config;
+        this.config = config;
         this.consumerHelper = consumerHelper;
-        this.logger = KinesisLogger.build(config.isEnableInfoLog());
+        this.logger = KinesisLogger.build();
     }
 
     Worker getWorker() {
@@ -35,8 +35,8 @@ public final class KinesisConsumer {
 
     public void subscribeStream() {
         this.workerWithId = createWorker();
-        // Before worker run(), put self in bag to for restart()
-        this.bag.setKinesisConsumer(this);
+        // Before worker run(), put self in config to for restart()
+        this.config.setKinesisConsumer(this);
         this.workerWithId.getWorker().run();
     }
 
@@ -50,14 +50,14 @@ public final class KinesisConsumer {
         Instant instant = Instant.now();
         String workerId = String.format("ConsumerWorker@%s-Since%s#%s", ip, DateUtils.getEpochMs(),
                 RandomUtils.getRandom(100));
-        KinesisClientLibConfiguration kclConfiguration = new KinesisClientLibConfiguration(bag.getConsumerName(),
-                bag.getStreamName(), bag.getAwsCredentialsProvider(), workerId);
-        kclConfiguration.withRegionName(bag.getAwsRegion());
-        kclConfiguration.withInitialPositionInStream(bag.getInitialPositionInStream());
-        kclConfiguration.withMaxRecords(bag.getMaxPollRecordCount());
-        kclConfiguration.withInitialLeaseTableReadCapacity(bag.getInitialLeaseTableReadCapacity());
-        kclConfiguration.withInitialLeaseTableWriteCapacity(bag.getInitialLeaseTableWriteCapacity());
-        IRecordProcessorFactory recordProcessorFactory = new KinesisRecordProcessorFactory(bag, consumerHelper);
+        KinesisClientLibConfiguration kclConfiguration = new KinesisClientLibConfiguration(config.getConsumerName(),
+                config.getStreamName(), config.getAwsCredentialsProvider(), workerId);
+        kclConfiguration.withRegionName(config.getAwsRegion());
+        kclConfiguration.withInitialPositionInStream(config.getInitialPositionInStream());
+        kclConfiguration.withMaxRecords(config.getMaxPollRecordCount());
+        kclConfiguration.withInitialLeaseTableReadCapacity(config.getInitialLeaseTableReadCapacity());
+        kclConfiguration.withInitialLeaseTableWriteCapacity(config.getInitialLeaseTableWriteCapacity());
+        IRecordProcessorFactory recordProcessorFactory = new KinesisRecordProcessorFactory(config, consumerHelper);
         IMetricsFactory metricsFactory = new NullMetricsFactory();
         Worker worker =
                 new Worker.Builder().recordProcessorFactory(recordProcessorFactory).config(kclConfiguration).metricsFactory(metricsFactory).build();
@@ -67,14 +67,14 @@ public final class KinesisConsumer {
     void restart(String shardId, ShutdownReason reason) {
         KinesisConsumerWorkerWithId oldKinesisConsumerWorkerWithId = this.workerWithId;
         // log
-        KinesisLog kinesisLog = new KinesisLog(bag, shardId);
+        KinesisLog kinesisLog = new KinesisLog(config, shardId);
         KinesisConsumerRestartException restartConsumerExpception =
                 new KinesisConsumerRestartException(oldKinesisConsumerWorkerWithId.getWorkerId(),
-                        bag.getConsumerRestartDelayMillis(), reason, kinesisLog);
+                        config.getConsumerRestartDelayMillis(), reason, kinesisLog);
         logger.warn(restartConsumerExpception);
         consumerHelper.alertConsumerRestart();
         try {
-            Thread.sleep(bag.getConsumerRestartDelayMillis());
+            Thread.sleep(config.getConsumerRestartDelayMillis());
         } catch (InterruptedException interruptedException) {
             // ignore
         }

@@ -27,8 +27,7 @@ public class Consumer {
             app.setupLogging();
             app.start();
         } catch (Exception e) {
-            System.err.println(String.format("Fail to start %s. Error -> %s", Consumer.class.getName(),
-                    ExceptionUtils.toStackTrace(e)));
+            System.err.println(String.format("Fail to start %s. Error -> %s", Consumer.class.getName(), ExceptionUtils.toStackTrace(e)));
         }
     }
 
@@ -96,8 +95,6 @@ public class Consumer {
         consumerConfig.setCheckpointRetryDelayMillis(checkpointRetryDelayMillis);
         String recordDataDecoderCharset = configUtils.getProperty(configFile, "recordDataDecoder");
         consumerConfig.setRecordDataDecoder(Charset.forName(recordDataDecoderCharset).newDecoder());
-        boolean enableInfoLog = Boolean.parseBoolean(configUtils.getProperty(configFile, "enableInfoLog"));
-        consumerConfig.setEnableInfoLog(enableInfoLog);
         return consumerConfig;
     }
 }
