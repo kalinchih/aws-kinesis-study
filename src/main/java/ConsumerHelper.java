@@ -17,7 +17,7 @@ public class ConsumerHelper implements KinesisConsumerHelper {
     }
 
     @Override
-    public void handleRecord(Record record) throws Exception {
+    public void handleRecord(Record record, String shardId) throws Exception {
         //        if (1 == 1) {
         //            String message = "OMG! OMG! GG when processing a stream record!!!";
         //            System.err.println(message);

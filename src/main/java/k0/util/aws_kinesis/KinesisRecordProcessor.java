@@ -66,7 +66,7 @@ public class KinesisRecordProcessor implements IRecordProcessor {
         logger.info(String.format("Pass record to (%s)%s. KinesisConsumerLog=%s.",
                 KinesisConsumerHelper.class.getSimpleName(), consumerHelper.toString(), new KinesisLog(config,
                         shardId, config.getKinesisConsumer().getWorkerId(), record.getSequenceNumber())));
-        consumerHelper.handleRecord(record);
+        consumerHelper.handleRecord(record, shardId);
     }
 
     private void checkpoint(IRecordProcessorCheckpointer checkpointer, String sequenceNumber) {
