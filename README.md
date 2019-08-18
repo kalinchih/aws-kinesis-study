@@ -75,7 +75,7 @@ Here is the KinesisConsumerConfig settings with default value.
     - checkpointMaxRetryCount = 10
     - checkpointRetryDelayMillis = 30000
     - recordDataDecoder = UTF8
-    - enableInfoLog = false
+   
 
 ---
 
